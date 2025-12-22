@@ -208,41 +208,8 @@ window.onload = function() { updateClock(); updateStatus(); };
     </div>
     <div class="status-indicator" id="status-indicator">Loading status...</div>
     <div class="health-indicator" id="health-indicator">Loading health...</div>
-@app.route("/health")
-def health():
-    import shutil
-    # CPU temp (Raspberry Pi or Linux)
-    try:
-        temp = None
-        if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
-            with open("/sys/class/thermal/thermal_zone0/temp") as f:
-                temp = float(f.read()) / 1000.0
-        elif hasattr(psutil, "sensors_temperatures"):
-            temps = psutil.sensors_temperatures()
-            for name, entries in temps.items():
-                for entry in entries:
-                    if entry.current and ("cpu" in entry.label.lower() or "core" in entry.label.lower()):
-                        temp = entry.current
-                        break
-        temp_str = f"{temp:.1f}°C" if temp else "N/A"
-    except Exception:
-        temp_str = "N/A"
-    # Disk usage
-    try:
-        du = shutil.disk_usage("/")
-        disk_str = f"Disk: {du.free//(1024*1024)}MB free"
-    except Exception:
-        disk_str = "Disk: N/A"
-    # Network status
-    try:
-        net = psutil.net_if_stats()
-        up = [k for k,v in net.items() if v.isup and not k.startswith('lo')]
-        net_str = f"Net: {', '.join(up)}" if up else "Net: Down"
-    except Exception:
-        net_str = "Net: N/A"
-
-    return {"health": f"CPU: {temp_str}\n{disk_str}\n{net_str}"}
-
+</body>
+</html>
 """
 
 import platform
