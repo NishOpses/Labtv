@@ -13,36 +13,40 @@ from useful_info import get_time_info
 from ics import Calendar
 
 # =====================
-# Announcement config
+# App setup
+# =====================
+app = Flask(__name__)
+
+# =====================
+# Announcement
 # =====================
 ANNOUNCEMENT_FILE = os.path.join(os.path.dirname(__file__), "announcements.json")
 
 def get_announcement():
     try:
         with open(ANNOUNCEMENT_FILE, "r") as f:
-            data = json.load(f)
-            return data.get("announcement", "")
+            return json.load(f).get("announcement", "")
     except Exception:
         return ""
 
 # =====================
-# Calendar Feed Config
+# Calendar
 # =====================
-OUTLOOK_ICAL_URL = os.environ.get(
-    "OUTLOOK_ICAL_URL",
-    "https://outlook.office365.com/owa/calendar/744e18cdc1534f5dbcdf3283c76a8f8b@opses.co.uk/85260d62ab584bd69aca5ac9a4223dd84268036899588616720/calendar.ics"
-)
+OUTLOOK_ICAL_URL = os.environ.get("OUTLOOK_ICAL_URL")
 CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.json")
 CALENDAR_CACHE_MINUTES = 15
 
 def get_calendar_events():
+    if not OUTLOOK_ICAL_URL:
+        return []
+
     import pytz
     utc = pytz.UTC
     now = datetime.utcnow().replace(tzinfo=utc)
 
     if os.path.exists(CALENDAR_CACHE_FILE):
         try:
-            with open(CALENDAR_CACHE_FILE, "r") as f:
+            with open(CALENDAR_CACHE_FILE) as f:
                 data = json.load(f)
             ts = datetime.fromisoformat(data["timestamp"])
             if (now - ts) < timedelta(minutes=CALENDAR_CACHE_MINUTES):
@@ -51,21 +55,20 @@ def get_calendar_events():
             pass
 
     try:
-        resp = requests.get(OUTLOOK_ICAL_URL, timeout=10)
-        if resp.status_code == 200:
-            c = Calendar(resp.text)
+        r = requests.get(OUTLOOK_ICAL_URL, timeout=10)
+        if r.status_code == 200:
+            cal = Calendar(r.text)
             events = []
-            for e in sorted(c.timeline, key=lambda ev: ev.begin):
+
+            for e in sorted(cal.timeline, key=lambda ev: ev.begin):
                 dt = e.begin.datetime
                 if dt.tzinfo is None:
                     dt = dt.replace(tzinfo=utc)
-                else:
-                    dt = dt.astimezone(utc)
 
                 if now <= dt <= now + timedelta(days=7):
                     events.append({
-                        "start": dt.strftime('%Y-%m-%d %H:%M'),
-                        "summary": e.name or "(No Title)",
+                        "start": dt.strftime("%Y-%m-%d %H:%M"),
+                        "summary": e.name or "No title",
                         "location": getattr(e, "location", None)
                     })
                 if len(events) >= 5:
@@ -81,43 +84,6 @@ def get_calendar_events():
     return []
 
 # =====================
-# App setup
-# =====================
-app = Flask(__name__)
-
-WIFI_SSID = os.environ.get("WIFI_SSID", "Opses_Global_Guest")
-WIFI_PASSWORD = os.environ.get("WIFI_PASSWORD", "Covert3791Beer105%")
-WIFI_AUTH = os.environ.get("WIFI_AUTH", "WPA")
-
-# =====================
-# Background updater
-# =====================
-UPDATE_CHECK_INTERVAL = 3600
-UPDATE_COMMAND = os.environ.get("KIOSK_UPDATE_COMMAND", "git pull")
-LAST_UPDATE_FILE = os.path.join(os.path.dirname(__file__), "last_update.txt")
-
-def background_update_loop():
-    while True:
-        try:
-            result = subprocess.run(
-                UPDATE_COMMAND,
-                shell=True,
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(__file__)
-            )
-            with open(LAST_UPDATE_FILE, "w") as f:
-                f.write(f"Last checked: {datetime.now().isoformat()}\n")
-                f.write(f"Command: {UPDATE_COMMAND}\n")
-                f.write(f"Return code: {result.returncode}\n")
-                f.write(f"Output:\n{result.stdout}\nErrors:\n{result.stderr}\n")
-        except Exception as e:
-            with open(LAST_UPDATE_FILE, "a") as f:
-                f.write(f"Update error: {e}\n")
-
-        time.sleep(UPDATE_CHECK_INTERVAL)
-
-# =====================
 # Weather
 # =====================
 WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
@@ -125,6 +91,20 @@ WEATHER_API_KEY = "144536c74a836feb69c1cd449b8457b9"
 WEATHER_LAT = 51.0902
 WEATHER_LON = -1.1662
 WEATHER_CACHE_MINUTES = 15
+
+def classify_weather(desc: str):
+    d = desc.lower()
+    if "rain" in d:
+        return "rainy"
+    if "snow" in d:
+        return "snowy"
+    if "cloud" in d:
+        return "cloudy"
+    if "clear" in d:
+        return "sunny"
+    if "fog" in d or "mist" in d:
+        return "foggy"
+    return "default"
 
 def get_weather():
     now = datetime.utcnow()
@@ -152,7 +132,7 @@ def get_weather():
                 "temp": int(round(w["main"]["temp"])),
                 "desc": w["weather"][0]["description"].title(),
                 "icon_url": f"https://openweathermap.org/img/wn/{w['weather'][0]['icon']}@4x.png",
-                "weather_class": "default"
+                "weather_class": classify_weather(w["weather"][0]["description"])
             }
             with open(WEATHER_CACHE_FILE, "w") as f:
                 json.dump({"timestamp": now.isoformat(), "weather": weather}, f)
@@ -162,24 +142,78 @@ def get_weather():
 
     return None
 
+# =====================
+# System status
+# =====================
 def get_system_status():
     return {
-        "cpu": psutil.cpu_percent(interval=0.5),
+        "cpu": psutil.cpu_percent(interval=0.3),
         "mem": psutil.virtual_memory().percent,
         "disk": psutil.disk_usage("/").percent
     }
+
+# =====================
+# HTML TEMPLATE (THIS WAS MISSING)
+# =====================
+TEMPLATE = """
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Lab Kiosk</title>
+<style>
+body { background:#181c20; color:white; font-family:Arial; text-align:center; }
+.clock { font-size:6vw; margin-top:2vh; }
+.announcement { background:#2ecc40; color:#111; padding:1vh; margin:2vh auto; width:80vw; border-radius:10px; }
+.status { position:fixed; right:2vw; bottom:2vh; background:black; padding:1vh 2vw; border-radius:12px; }
+.wifi { position:fixed; left:2vw; bottom:2vh; }
+</style>
+</head>
+<body>
+
+{% if announcement %}
+<div class="announcement">{{ announcement }}</div>
+{% endif %}
+
+<div class="clock">{{ date }}</div>
+
+{% if weather %}
+<div>{{ weather.temp }}°C – {{ weather.desc }}</div>
+{% endif %}
+
+<h3>Upcoming Events</h3>
+{% for e in calendar_events %}
+<div>{{ e.start }} – {{ e.summary }}</div>
+{% endfor %}
+
+<div class="wifi">
+    <div>WiFi: {{ ssid }}</div>
+    <img src="/wifi_qr" width="140">
+</div>
+
+<div class="status">
+CPU {{ sys_status.cpu }}%<br>
+RAM {{ sys_status.mem }}%<br>
+Disk {{ sys_status.disk }}%
+</div>
+
+</body>
+</html>
+"""
 
 # =====================
 # Routes
 # =====================
 @app.route("/wifi_qr")
 def wifi_qr():
-    qr_str = f"WIFI:T:{WIFI_AUTH};S:{WIFI_SSID};P:{WIFI_PASSWORD};;"
-    img = qrcode.make(qr_str)
+    qr = qrcode.make(f"WIFI:T:WPA;S:{WIFI_SSID};P:{WIFI_PASSWORD};;")
     buf = io.BytesIO()
-    img.save(buf, format="PNG")
+    qr.save(buf, format="PNG")
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
+
+WIFI_SSID = "Opses_Global_Guest"
+WIFI_PASSWORD = "Covert3791Beer105%"
 
 @app.route("/")
 def public_info():
@@ -188,16 +222,14 @@ def public_info():
         TEMPLATE,
         date=get_time_info()["date"],
         weather=weather,
-        weather_class=weather["weather_class"] if weather else "default",
         sys_status=get_system_status(),
         calendar_events=get_calendar_events(),
-        ssid=WIFI_SSID,
-        announcement=get_announcement()
+        announcement=get_announcement(),
+        ssid=WIFI_SSID
     )
 
 # =====================
 # Main
 # =====================
 if __name__ == "__main__":
-    threading.Thread(target=background_update_loop, daemon=True).start()
-    app.run(host="0.0.0.0", port=8081, debug=False, use_reloader=False)
+    app.run(host="0.0.0.0", port=8081, debug=False)
