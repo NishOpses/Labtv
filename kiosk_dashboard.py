@@ -134,28 +134,8 @@ body {
     margin: 0;
     width: 100vw;
     height: 100vh;
-    transition: background 0.7s cubic-bezier(.4,0,.2,1);
-}
-body.weather-sunny {
-    background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%);
-}
-body.weather-cloudy {
-    background: linear-gradient(135deg, #757f9a 0%, #d7dde8 100%);
-}
-body.weather-rainy {
-    background: linear-gradient(135deg, #314755 0%, #26a0da 100%);
-}
-body.weather-snowy {
-    background: linear-gradient(135deg, #e6dada 0%, #274046 100%);
-}
-body.weather-stormy {
-    background: linear-gradient(135deg, #232526 0%, #414345 100%);
-}
-body.weather-foggy {
-    background: linear-gradient(135deg, #abbaab 0%, #ffffff 100%);
-}
-body.weather-default {
-    background: linear-gradient(135deg, #181c20 0%, #23272b 100%);
+    background: #181c20;
+    color: #fff;
 }
 .public-container {
     height: 100vh;
