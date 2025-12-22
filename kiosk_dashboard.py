@@ -157,11 +157,21 @@ body {
 }
 .public-clock {
     font-size: 11vw;
-    color: #2ecc40;
+    color: #fff;
     font-weight: bold;
     letter-spacing: 0.08em;
     text-shadow: 0 4px 24px #000a;
     margin-bottom: 1vh;
+    display: inline-block;
+    perspective: 200px;
+}
+.flip {
+    animation: flip 0.5s;
+}
+@keyframes flip {
+    0% { transform: rotateX(0deg); }
+    50% { transform: rotateX(90deg); }
+    100% { transform: rotateX(0deg); }
 }
 .public-date {
     font-size: 6vw;
@@ -331,10 +341,18 @@ body {
 </style>
 
 <script>
+let lastTime = '';
 function updateClock() {
     const now = new Date();
-    document.getElementById("publicclock").textContent =
-        now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    const clockElem = document.getElementById("publicclock");
+    if (clockElem.textContent !== timeStr) {
+        clockElem.textContent = timeStr;
+        clockElem.classList.remove('flip');
+        // Force reflow to restart animation
+        void clockElem.offsetWidth;
+        clockElem.classList.add('flip');
+    }
 }
 setInterval(updateClock, 1000);
 window.onload = updateClock;
