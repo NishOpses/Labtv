@@ -52,6 +52,8 @@ launch_dashboard() {
 
 # Function to launch Chromium in kiosk mode with dashboard and all other web pages
 launch_chromium() {
+    # Get the Pi's actual IP address
+    PI_IP=$(hostname -I | awk '{print $1}')
     /usr/bin/chromium-browser --noerrdialogs \
         --disable-infobars \
         --disable-session-crashed-bubble \
@@ -59,7 +61,7 @@ launch_chromium() {
         --disable-popup-blocking \
         --start-maximized \
         --kiosk \
-        "http://localhost:8081" \
+        "http://$PI_IP:8081" \
         "https://opses-verto.glide.page/dl/dash" \
         "https://opses-verto.glide.page/dl/orders" \
         "https://opses-company.monday.com/boards/1790536551" \
