@@ -1,10 +1,20 @@
+
+from flask import Flask, render_template_string, send_file
 import io
 import qrcode
-from flask import send_file
+import os
+import requests
+import json
+from datetime import datetime, timedelta
+from useful_info import get_time_info
+
+app = Flask(__name__)
+
 # WiFi QR code config (edit as needed)
 WIFI_SSID = "LabWiFi"
 WIFI_PASSWORD = "LabPassword123"
 WIFI_AUTH = "WPA"  # or "WEP" or "nopass"
+
 # Serve QR code image
 @app.route("/wifi_qr")
 def wifi_qr():
@@ -14,15 +24,6 @@ def wifi_qr():
     img.save(buf, format="PNG")
     buf.seek(0)
     return send_file(buf, mimetype="image/png")
-
-from flask import Flask, render_template_string
-import os
-import requests
-import json
-from datetime import datetime, timedelta
-from useful_info import get_time_info
-
-app = Flask(__name__)
 
 TEMPLATE = """
 </style>
@@ -214,30 +215,6 @@ window.onload = function() { updateClock(); updateStatus(); };
 
 import platform
 import psutil
-
-        function updateStatus() {
-            fetch('/status').then(r => r.json()).then(data => {
-                var el = document.getElementById('status-indicator');
-                if (el) {
-                    el.textContent = data.status;
-                }
-            });
-        }
-        setInterval(updateStatus, 30000);
-
-        function updateHealth() {
-            fetch('/health').then(r => r.json()).then(data => {
-                var el = document.getElementById('health-indicator');
-                if (el) {
-                    el.textContent = data.health;
-                }
-            });
-        }
-        setInterval(updateHealth, 30000);
-
-        window.onload = function() { updateClock(); updateStatus(); updateHealth(); };
-    </script>
-WEATHER_LAT = 51.0902
 WEATHER_LON = -1.1662
 WEATHER_CACHE_MINUTES = 15  # 96 calls/day max
 
@@ -297,8 +274,8 @@ def public_info():
         TEMPLATE,
         date=time_info['date'],
         weather=weather,
-        bg_class=bg_class
-            ssid=WIFI_SSID
+        bg_class=bg_class,
+        ssid=WIFI_SSID
     )
 
 if __name__ == "__main__":
