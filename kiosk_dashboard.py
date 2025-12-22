@@ -295,8 +295,9 @@ body.weather-default {
     margin-top: 0.5vh;
     box-shadow: 0 2px 8px #0001;
 }
+/* All text white for visibility */
 .wifi-qr-label {
-    color: #222;
+    color: #fff;
     font-size: 1.2vw;
     margin-bottom: 0.5vh;
     font-weight: 600;
@@ -305,8 +306,8 @@ body.weather-default {
     position: fixed;
     right: 2vw;
     bottom: 2vh;
-    background: rgba(255,255,255,0.80);
-    color: #222;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
     border-radius: 16px;
     padding: 1vw 1.5vw;
     font-size: 1.2vw;
