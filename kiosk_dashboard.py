@@ -192,6 +192,29 @@ body {
     width: 13vw;
     min-width: 120px;
     max-width: 220px;
+    transition: transform 0.4s;
+}
+/* Weather icon animations */
+.weather-icon.sunny {
+    animation: pulse 2s infinite;
+}
+.weather-icon.rainy, .weather-icon.snowy {
+    animation: bounce 1.5s infinite;
+}
+.weather-icon.windy {
+    animation: rotate 3s linear infinite;
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.12); }
+}
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 .weather-temp {
     font-size: 8vw;
@@ -328,7 +351,7 @@ window.onload = updateClock;
     <div class="weather">
         {% if weather %}
         <div class="weather-row">
-            <img class="weather-icon" src="{{ weather.icon_url }}">
+            <img class="weather-icon {{ weather_class }}" src="{{ weather.icon_url }}">
             <span class="weather-temp">{{ weather.temp }}°C</span>
         </div>
         <div class="weather-desc">{{ weather.desc }}</div>
