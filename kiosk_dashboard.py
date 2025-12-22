@@ -180,7 +180,6 @@ TEMPLATE = """
             z-index: 100;
             text-align: left;
             opacity: 0.95;
-        }
         .system-status strong {
             color: #2ecc40;
         }
