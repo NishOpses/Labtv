@@ -3,6 +3,28 @@ from flask import Flask, render_template_string, send_file
 import io
 import qrcode
 import os
+import threading
+import time
+import subprocess
+UPDATE_CHECK_INTERVAL = 3600  # seconds (1 hour)
+UPDATE_COMMAND = os.environ.get("KIOSK_UPDATE_COMMAND", "git pull")  # or a custom update script
+LAST_UPDATE_FILE = os.path.join(os.path.dirname(__file__), "last_update.txt")
+
+def background_update_loop():
+    while True:
+        try:
+            # Run update command (e.g., git pull or custom script)
+            result = subprocess.run(UPDATE_COMMAND, shell=True, capture_output=True, text=True, cwd=os.path.dirname(__file__))
+            # Log update result
+            with open(LAST_UPDATE_FILE, "w") as f:
+                f.write(f"Last checked: {datetime.now().isoformat()}\n")
+                f.write(f"Command: {UPDATE_COMMAND}\n")
+                f.write(f"Return code: {result.returncode}\n")
+                f.write(f"Output:\n{result.stdout}\nErrors:\n{result.stderr}\n")
+        except Exception as e:
+            with open(LAST_UPDATE_FILE, "a") as f:
+                f.write(f"Update error: {e}\n")
+        time.sleep(UPDATE_CHECK_INTERVAL)
 
 from flask import Flask, render_template_string
 import os
@@ -12,6 +34,10 @@ from datetime import datetime, timedelta
 from useful_info import get_time_info
 
 app = Flask(__name__)
+
+WIFI_SSID = os.environ.get("WIFI_SSID", "YourSSID")
+WIFI_PASSWORD = os.environ.get("WIFI_PASSWORD", "YourPassword")
+WIFI_AUTH = os.environ.get("WIFI_AUTH", "WPA")  # WPA, WEP, or nopass
 
 TEMPLATE = """
 <!DOCTYPE html>
@@ -107,6 +133,26 @@ TEMPLATE = """
             .public-clock { font-size: 13vw; }
             .public-date { font-size: 5vw; }
         }
+        .wifi-qr {
+            margin-top: 4vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .wifi-qr img {
+            width: 22vw;
+            min-width: 120px;
+            max-width: 260px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px #0004;
+            margin-bottom: 1vh;
+        }
+        .wifi-qr-label {
+            color: #fff;
+            font-size: 1.2vw;
+            margin-bottom: 0.5vh;
+        }
     </style>
     <script>
     function updateClock() {
@@ -120,7 +166,16 @@ TEMPLATE = """
     </script>
 </head>
 <body>
-    <div class=\"public-container\">\n        <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">\n        <div class=\"public-clock\" id=\"publicclock\"></div>\n        <div class=\"public-date\">{{ date }}</div>\n        <div class=\"weather\">\n            {% if weather %}\n            <div class=\"weather-row\">\n                <img class=\"weather-icon\" src=\"{{ weather['icon_url'] }}\" alt=\"Weather\">\n                <span class=\"weather-temp\">{{ weather['temp'] }}°C</span>\n            </div>\n            <div class=\"weather-desc\">{{ weather['desc'] }}</div>\n            {% else %}\n            <div class=\"weather-desc\">Weather unavailable</div>\n            {% endif %}\n        </div>\n    </div>\n</body>\n</html>\n"""
+    <div class=\"public-container\">\n        <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">\n        <div class=\"public-clock\" id=\"publicclock\"></div>\n        <div class=\"public-date\">{{ date }}</div>\n        <div class=\"weather\">\n            {% if weather %}\n            <div class=\"weather-row\">\n                <img class=\"weather-icon\" src=\"{{ weather['icon_url'] }}\" alt=\"Weather\">\n                <span class=\"weather-temp\">{{ weather['temp'] }}°C</span>\n            </div>\n            <div class=\"weather-desc\">{{ weather['desc'] }}</div>\n            {% else %}\n            <div class=\"weather-desc\">Weather unavailable</div>\n            {% endif %}\n        </div>\n        <div class=\"wifi-qr\">\n            <div class=\"wifi-qr-label\">WiFi QR ({{ ssid }})</div>\n            <img src=\"/wifi_qr\" alt=\"WiFi QR Code\">\n            <div class=\"wifi-qr-label\">Scan to connect</div>\n        </div>\n    </div>\n</body>\n</html>\n"""
+@app.route("/wifi_qr")
+def wifi_qr():
+    # WiFi QR code format: WIFI:T:WPA;S:mynetwork;P:mypass;;
+    qr_str = f"WIFI:T:{WIFI_AUTH};S:{WIFI_SSID};P:{WIFI_PASSWORD};;"
+    img = qrcode.make(qr_str)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png")
 
 # Weather caching logic
 WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
@@ -166,9 +221,12 @@ def public_info():
     return render_template_string(
         TEMPLATE,
         date=time_info['date'],
-        weather=weather
+        weather=weather,
+        ssid=WIFI_SSID
     )
 
 if __name__ == "__main__":
+    # Start background update thread (daemon so it won't block exit)
+    updater = threading.Thread(target=background_update_loop, daemon=True)
+    updater.start()
     app.run(host="0.0.0.0", port=8081, debug=False, use_reloader=False)
-    app.run(host="0.0.0.0", port=8081, debug=True)
