@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import os
+import io
 import platform
 # =====================
 # MAC Address-based Colleague Presence Detection
@@ -34,10 +38,6 @@ def get_present_absent_colleagues():
         else:
             absent.append(name)
     return present, absent
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-import os
-import io
 import qrcode
 import psutil
 import threading
