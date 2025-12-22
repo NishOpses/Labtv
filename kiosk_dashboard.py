@@ -102,17 +102,47 @@ TEMPLATE = """
             .public-clock { font-size: 13vw; }
             .public-date { font-size: 5vw; }
         }
-    </style>
-    <script>
-    function updateClock() {
-        var now = new Date();
-        var time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-        var pubclock = document.getElementById('publicclock');
-        if (pubclock) pubclock.textContent = time;
+</style>
+<style>
+    .status-indicator {
+        position: fixed;
+        right: 2vw;
+        bottom: 2vh;
+        background: rgba(24,28,32,0.92);
+        color: #fff;
+        font-size: 1.5vw;
+        padding: 0.7vw 1.5vw;
+        border-radius: 1vw;
+        box-shadow: 0 2px 12px #0006;
+        z-index: 100;
+        opacity: 0.92;
+        min-width: 180px;
+        text-align: right;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        letter-spacing: 0.03em;
     }
-    setInterval(updateClock, 1000);
-    window.onload = updateClock;
-    </script>
+</style>
+<script>
+function updateClock() {
+    var now = new Date();
+    var time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+    var pubclock = document.getElementById('publicclock');
+    if (pubclock) pubclock.textContent = time;
+}
+setInterval(updateClock, 1000);
+window.onload = updateClock;
+
+function updateStatus() {
+    fetch('/status').then(r => r.json()).then(data => {
+        var el = document.getElementById('status-indicator');
+        if (el) {
+            el.textContent = data.status;
+        }
+    });
+}
+setInterval(updateStatus, 30000);
+window.onload = function() { updateClock(); updateStatus(); };
+</script>
 </head>
 <body>
     <div class=\"public-container\">
@@ -131,9 +161,32 @@ TEMPLATE = """
             {% endif %}
         </div>
     </div>
+    <div class="status-indicator" id="status-indicator">Loading status...</div>
 </body>
 </html>
 """
+import platform
+import psutil
+@app.route("/status")
+def status():
+    # Uptime in human readable form
+    try:
+        boot = psutil.boot_time()
+        now = datetime.now().timestamp()
+        uptime_sec = int(now - boot)
+        days, rem = divmod(uptime_sec, 86400)
+        hours, rem = divmod(rem, 3600)
+        minutes, _ = divmod(rem, 60)
+        if days > 0:
+            upstr = f"Uptime: {days}d {hours}h {minutes}m"
+        elif hours > 0:
+            upstr = f"Uptime: {hours}h {minutes}m"
+        else:
+            upstr = f"Uptime: {minutes}m"
+        status = upstr + "  |  System OK"
+    except Exception:
+        status = "Status unavailable"
+    return {"status": status}
 
 # Weather caching logic
 WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
