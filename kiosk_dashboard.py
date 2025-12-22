@@ -1,3 +1,48 @@
+from ics import Calendar
+
+# =====================
+# Google Calendar Feed Config
+# =====================
+GOOGLE_ICAL_URL = os.environ.get("GOOGLE_ICAL_URL", "https://calendar.google.com/calendar/ical/00e62f5d1cd53fe8c514d10962c7dc1e53c2a238ef907c5d4422e3f4edad0718%40group.calendar.google.com/public/basic.ics")
+CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.json")
+CALENDAR_CACHE_MINUTES = 15
+
+def get_calendar_events():
+    if not GOOGLE_ICAL_URL:
+        return []
+    now = datetime.utcnow()
+    # Try cache
+    if os.path.exists(CALENDAR_CACHE_FILE):
+        try:
+            with open(CALENDAR_CACHE_FILE, "r") as f:
+                data = json.load(f)
+            ts = datetime.fromisoformat(data.get("timestamp"))
+            if (now - ts) < timedelta(minutes=CALENDAR_CACHE_MINUTES):
+                return data["events"]
+        except Exception:
+            pass
+    # Fetch from iCal feed
+    try:
+        resp = requests.get(GOOGLE_ICAL_URL, timeout=10)
+        if resp.status_code == 200:
+            c = Calendar(resp.text)
+            events = []
+            for e in sorted(c.timeline, key=lambda ev: ev.begin):
+                # Only show future events (today and next 7 days)
+                if e.begin.datetime >= now and e.begin.datetime <= now + timedelta(days=7):
+                    events.append({
+                        "start": e.begin.format('YYYY-MM-DD HH:mm'),
+                        "summary": e.name or "(No Title)",
+                        "location": getattr(e, 'location', None)
+                    })
+                    if len(events) >= 5:
+                        break
+            with open(CALENDAR_CACHE_FILE, "w") as f:
+                json.dump({"timestamp": now.isoformat(), "events": events}, f)
+            return events
+    except Exception:
+        pass
+    return []
 from flask import Flask, render_template_string, send_file
 import io
 import qrcode
@@ -180,6 +225,7 @@ window.onload = updateClock;
     <div class="public-clock" id="publicclock"></div>
     <div class="public-date">{{ date }}</div>
 
+
     <div class="weather">
         {% if weather %}
         <div class="weather-row">
@@ -189,6 +235,23 @@ window.onload = updateClock;
         <div class="weather-desc">{{ weather.desc }}</div>
         {% else %}
         <div class="weather-desc">Weather unavailable</div>
+        {% endif %}
+    </div>
+
+    <div class="calendar-events">
+        <h2 style="font-size:2vw;margin:2vh 0 1vh 0;color:#fff;">Upcoming Events</h2>
+        {% if calendar_events and calendar_events|length > 0 %}
+            <ul style="list-style:none;padding:0;margin:0;">
+            {% for event in calendar_events %}
+                <li style="margin-bottom:1vh;font-size:1.5vw;color:#fff;">
+                    <span style="color:#2ecc40;font-weight:bold;">{{ event.start[5:16] }}</span>
+                    &mdash; {{ event.summary }}
+                    {% if event.location %}<span style="color:#aaa;">@ {{ event.location }}</span>{% endif %}
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <div style="color:#aaa;font-size:1.2vw;">No upcoming events</div>
         {% endif %}
     </div>
 
@@ -277,7 +340,8 @@ def public_info():
         date=get_time_info()["date"],
         weather=get_weather(),
         sys_status=get_system_status(),
-        ssid=WIFI_SSID
+        ssid=WIFI_SSID,
+        calendar_events=get_calendar_events()
     )
 
 # =====================
