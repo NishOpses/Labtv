@@ -22,7 +22,7 @@ TEMPLATE = """
             padding: 0;
             width: 100vw;
             height: 100vh;
-            overflow: hidden;
+        <img class="company-logo" src="/static/Opses_Logo.jpg" alt="OPSES Logo">
         }
         .public-container {
             width: 100vw;
