@@ -1,3 +1,13 @@
+# Announcement file path
+ANNOUNCEMENT_FILE = os.path.join(os.path.dirname(__file__), "announcements.json")
+
+def get_announcement():
+    try:
+        with open(ANNOUNCEMENT_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("announcement", "")
+    except Exception:
+        return ""
 import os
 import io
 import qrcode
@@ -333,6 +343,20 @@ body {
 .system-status strong {
     color: #2ecc40;
 }
+.announcement-bar {
+    width: 90vw;
+    max-width: 1000px;
+    margin: 2vh auto 2vh auto;
+    background: #2ecc40;
+    color: #181c20;
+    font-size: 2.8vw;
+    font-weight: bold;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px #0003;
+    padding: 1.2vh 2vw;
+    text-align: center;
+    letter-spacing: 0.04em;
+}
 @media (max-width: 700px) {
     .public-date, .public-clock, .weather, .calendar-events h2, .calendar-events li {
         font-size: 6vw !important;
@@ -359,6 +383,10 @@ window.onload = updateClock;
 <body class="weather-{{ weather_class }}">
 <div class="public-container">
     <img class="company-logo" src="/static/Opses_Logo.jpg" alt="OPSES Logo">
+
+    {% if announcement %}
+    <div class="announcement-bar">{{ announcement }}</div>
+    {% endif %}
 
     <div class="public-clock" id="publicclock">
         <span id="clock-hour"></span><span>:</span><span id="clock-minute"></span><span>:</span><span id="clock-second"></span>
@@ -513,6 +541,7 @@ def get_system_status():
 @app.route("/")
 def public_info():
     weather = get_weather()
+    announcement = get_announcement()
     return render_template_string(
         TEMPLATE,
         date=get_time_info()["date"],
@@ -520,7 +549,8 @@ def public_info():
         sys_status=get_system_status(),
         ssid=WIFI_SSID,
         calendar_events=get_calendar_events(),
-        weather_class=weather["weather_class"] if weather else "default"
+        weather_class=weather["weather_class"] if weather else "default",
+        announcement=announcement
     )
 
 # =====================
