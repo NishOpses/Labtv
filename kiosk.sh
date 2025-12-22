@@ -64,8 +64,7 @@ launch_chromium() {
         "http://$PI_IP:8081" \
         "https://opses-verto.glide.page/dl/dash" \
         "https://opses-verto.glide.page/dl/orders" \
-        "https://opses-company.monday.com/boards/1790536551" \
-        "https://opses-company.monday.com/boards/1809770010/views/25272562" \
+        # Monday.com URLs removed
         "https://opses.co.uk/" &
     CHROMIUM_PID=$!
     echo "Chromium launched with PID $CHROMIUM_PID"
@@ -86,20 +85,7 @@ sleep 120
 send_teams_notification "Kiosk script started successfully on $(hostname) at $(date)"
 
 
-# Function to check if the "Login" screen is visible and press Enter
-check_and_login() {
-    # Check if the login screen is visible by looking for a known element (e.g., a login button or specific UI element)
-    # This is a basic approach assuming a login button or field appears when logged out.
-    
-    # Change this to fit the specific login screen UI element
-    export DISPLAY=:0
-    
-    if xdotool search --onlyvisible  --name "monday.com" getwindowname; then
-        echo "Logged out, attempting to log in..."
-        xdotool key Return  # Simulate pressing Enter
-        xdotool key Return
-    fi
-}
+
 
 
 # Refresh all open tabs
@@ -159,8 +145,7 @@ while true; do
     fi
 
 
-    # Check if logged out from Monday and log in if necessary
-    check_and_login
+
 
     # Switch to the next tab every 60 seconds
     xdotool keydown ctrl+Next; xdotool keyup ctrl+Next;
