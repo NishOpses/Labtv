@@ -271,6 +271,7 @@ body.weather-default {
     color: #aaa;
     font-size: 3vw;
 }
+/* Modernized system status and wifi QR backgrounds */
 .wifi-qr {
     position: fixed;
     left: 2vw;
@@ -280,10 +281,10 @@ body.weather-default {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    background: rgba(24,28,32,0.92);
+    background: rgba(255,255,255,0.80);
     padding: 1vw 1.5vw;
-    border-radius: 14px;
-    box-shadow: 0 2px 12px #0004;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px #0002;
 }
 .wifi-qr img {
     width: 14vw;
@@ -292,22 +293,25 @@ body.weather-default {
     background: #fff;
     border-radius: 10px;
     margin-top: 0.5vh;
+    box-shadow: 0 2px 8px #0001;
 }
 .wifi-qr-label {
-    color: #fff;
+    color: #222;
     font-size: 1.2vw;
     margin-bottom: 0.5vh;
+    font-weight: 600;
 }
 .system-status {
     position: fixed;
     right: 2vw;
     bottom: 2vh;
-    background: rgba(30,34,40,0.92);
-    color: #fff;
-    border-radius: 12px;
+    background: rgba(255,255,255,0.80);
+    color: #222;
+    border-radius: 16px;
     padding: 1vw 1.5vw;
     font-size: 1.2vw;
-    box-shadow: 0 2px 12px #0004;
+    box-shadow: 0 4px 24px #0002;
+    font-weight: 500;
 }
 .system-status strong {
     color: #2ecc40;
