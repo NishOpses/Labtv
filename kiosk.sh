@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Auto-update: Pull latest code from git repository
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+if [ -d .git ]; then
+    echo "Updating code from git..."
+    git pull
+else
+    echo "Warning: Not a git repository. Skipping auto-update."
+fi
+
 # Set display environment variable for X applications
 export DISPLAY=:0
 
@@ -13,19 +23,27 @@ unclutter -idle 0.5 -root &
 sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' /home/$USER/.config/chromium/Default/Preferences
 sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' /home/$USER/.config/chromium/fault/Preferences
 
-# Launch Chromium in kiosk mode with necessary flags
-/usr/bin/chromium-browser --noerrdialogs \
-    --disable-infobars \
-    --disable-session-crashed-bubble \
-    --disable-features=TranslateUI \
-    --disable-popup-blocking \
-    --start-maximized \
-    --kiosk \
-    "https://opses-verto.glide.page/dl/dash" \
-    "https://opses-verto.glide.page/dl/orders" \
-    "https://opses-company.monday.com/boards/1790536551" \
-    "https://opses-company.monday.com/boards/1809770010/views/25272562" \
-    "https://opses.co.uk/" &
+
+# Function to launch Chromium in kiosk mode
+launch_chromium() {
+    /usr/bin/chromium-browser --noerrdialogs \
+        --disable-infobars \
+        --disable-session-crashed-bubble \
+        --disable-features=TranslateUI \
+        --disable-popup-blocking \
+        --start-maximized \
+        --kiosk \
+        "https://opses-verto.glide.page/dl/dash" \
+        "https://opses-verto.glide.page/dl/orders" \
+        "https://opses-company.monday.com/boards/1790536551" \
+        "https://opses-company.monday.com/boards/1809770010/views/25272562" \
+        "https://opses.co.uk/" &
+    CHROMIUM_PID=$!
+    echo "Chromium launched with PID $CHROMIUM_PID"
+}
+
+# Initial launch
+launch_chromium
 
 # Wait for Chromium to start
 sleep 120
@@ -66,7 +84,14 @@ else
 fi
 
 
+
 while true; do
+    # Health check: Restart Chromium if not running
+    if ! pgrep -x "chromium-browser" > /dev/null; then
+        echo "Chromium not running! Restarting..."
+        launch_chromium
+        sleep 10  # Give Chromium a moment to start
+    fi
 
     # Check if logged out from Monday and log in if necessary
     check_and_login
