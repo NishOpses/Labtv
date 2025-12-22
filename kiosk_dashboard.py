@@ -1,10 +1,4 @@
 import os
-from ics import Calendar
-
-# =====================
-# Google Calendar Feed Config
-# =====================
-import os
 import io
 import qrcode
 import psutil
@@ -19,8 +13,7 @@ from useful_info import get_time_info
 from ics import Calendar
 
 # =====================
-# Google Calendar Feed Config
-
+# Calendar Feed Config
 # =====================
 OUTLOOK_ICAL_URL = os.environ.get("OUTLOOK_ICAL_URL", "https://outlook.office365.com/owa/calendar/744e18cdc1534f5dbcdf3283c76a8f8b@opses.co.uk/85260d62ab584bd69aca5ac9a4223dd84268036899588616720/calendar.ics")
 CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.json")
@@ -86,18 +79,6 @@ def get_calendar_events():
     except Exception as e:
         print(f"[DEBUG] Exception fetching/parsing ICS feed: {e}")
     return []
-from flask import Flask, render_template_string, send_file
-import io
-import qrcode
-import os
-import psutil
-import threading
-import time
-import subprocess
-import requests
-import json
-from datetime import datetime, timedelta
-from useful_info import get_time_info
 
 # =====================
 # App setup
@@ -150,93 +131,173 @@ TEMPLATE = """
 <style>
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
-    background: #181c20;
     margin: 0;
     width: 100vw;
     height: 100vh;
+    transition: background 0.7s cubic-bezier(.4,0,.2,1);
+}
+body.weather-sunny {
+    background: linear-gradient(135deg, #f9d423 0%, #ff4e50 100%);
+}
+body.weather-cloudy {
+    background: linear-gradient(135deg, #757f9a 0%, #d7dde8 100%);
+}
+body.weather-rainy {
+    background: linear-gradient(135deg, #314755 0%, #26a0da 100%);
+}
+body.weather-snowy {
+    background: linear-gradient(135deg, #e6dada 0%, #274046 100%);
+}
+body.weather-stormy {
+    background: linear-gradient(135deg, #232526 0%, #414345 100%);
+}
+body.weather-foggy {
+    background: linear-gradient(135deg, #abbaab 0%, #ffffff 100%);
+}
+body.weather-default {
+    background: linear-gradient(135deg, #181c20 0%, #23272b 100%);
 }
 .public-container {
     height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 8vh;
+    padding-top: 7vh;
+    padding-bottom: 3vh;
+    width: 100vw;
+    box-sizing: border-box;
 }
 .company-logo {
-    width: 32vw;
+    width: 30vw;
     max-width: 340px;
     background: #fff;
-    border-radius: 16px;
-    margin-bottom: 3vh;
+    border-radius: 18px;
+    margin-bottom: 2vh;
+    box-shadow: 0 4px 24px #0003;
 }
 .public-clock {
-    font-size: 10vw;
+    font-size: 11vw;
     color: #2ecc40;
     font-weight: bold;
+    letter-spacing: 0.08em;
+    text-shadow: 0 4px 24px #000a;
+    margin-bottom: 1vh;
 }
 .public-date {
     font-size: 6vw;
     color: #fff;
     font-weight: bold;
     margin-bottom: 2vh;
+    text-shadow: 0 2px 8px #0006;
 }
-    .weather {
-        margin-top: 2vh;
-        color: #fff;
-        font-size: 4vw;
-        font-weight: bold;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
-    .weather-row {
-        display: flex;
-        align-items: center;
-        gap: 3vw;
-    }
-    .weather-icon {
-        width: 12vw;
-        min-width: 140px;
-        max-width: 260px;
-    }
-    .weather-temp {
-        font-size: 8vw;
-        color: #2ecc40;
-        font-weight: 900;
-        margin-left: 2vw;
-    }
-    .weather-desc {
-        font-size: 3vw;
-        margin-top: 1vh;
-        color: #eee;
-    }
-    .wifi-qr {
-        position: fixed;
-        left: 2vw;
-        bottom: 2vh;
-        margin: 0;
-        z-index: 200;
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        background: rgba(24,28,32,0.92);
-        padding: 1vw 1.5vw;
-        border-radius: 14px;
-        box-shadow: 0 2px 12px #0004;
-    }
-    .wifi-qr img {
-        width: 14vw;
-        min-width: 90px;
-        max-width: 180px;
-        background: #fff;
-        border-radius: 10px;
-        margin-top: 0.5vh;
-    }
-    .wifi-qr-label {
-        color: #fff;
-        font-size: 1.2vw;
-        margin-bottom: 0.5vh;
-    }
+.weather {
+    margin-top: 2vh;
+    color: #fff;
+    font-size: 4vw;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(0,0,0,0.10);
+    border-radius: 18px;
+    padding: 2vh 4vw;
+    box-shadow: 0 2px 12px #0002;
+}
+.weather-row {
+    display: flex;
+    align-items: center;
+    gap: 3vw;
+}
+.weather-icon {
+    width: 13vw;
+    min-width: 120px;
+    max-width: 220px;
+}
+.weather-temp {
+    font-size: 8vw;
+    color: #2ecc40;
+    font-weight: 900;
+    margin-left: 2vw;
+    text-shadow: 0 2px 12px #0006;
+}
+.weather-desc {
+    font-size: 3vw;
+    margin-top: 1vh;
+    color: #eee;
+    text-shadow: 0 1px 4px #0005;
+}
+.calendar-events {
+    margin-top: 4vh;
+    background: rgba(0,0,0,0.13);
+    border-radius: 18px;
+    box-shadow: 0 2px 12px #0002;
+    padding: 2vh 4vw;
+    width: 80vw;
+    max-width: 900px;
+}
+.calendar-events h2 {
+    font-size: 4vw;
+    margin: 2vh 0 2vh 0;
+    color: #fff;
+    letter-spacing: 0.07em;
+    text-shadow: 0 2px 8px #0006;
+}
+.calendar-events ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.calendar-events li {
+    margin-bottom: 3vh;
+    font-size: 4vw;
+    color: #fff;
+    font-weight: bold;
+    line-height: 1.4;
+    text-shadow: 0 2px 8px #0006;
+}
+.calendar-events li span {
+    font-size: 4.2vw;
+}
+.calendar-events li .event-date {
+    color: #2ecc40;
+    font-weight: 900;
+    font-size: 4.2vw;
+}
+.calendar-events li .event-location {
+    color: #aaa;
+    font-size: 3vw;
+}
+.calendar-events .no-events {
+    color: #aaa;
+    font-size: 3vw;
+}
+.wifi-qr {
+    position: fixed;
+    left: 2vw;
+    bottom: 2vh;
+    margin: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    background: rgba(24,28,32,0.92);
+    padding: 1vw 1.5vw;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px #0004;
+}
+.wifi-qr img {
+    width: 14vw;
+    min-width: 90px;
+    max-width: 180px;
+    background: #fff;
+    border-radius: 10px;
+    margin-top: 0.5vh;
+}
+.wifi-qr-label {
+    color: #fff;
+    font-size: 1.2vw;
+    margin-bottom: 0.5vh;
+}
 .system-status {
     position: fixed;
     right: 2vw;
@@ -246,9 +307,18 @@ body {
     border-radius: 12px;
     padding: 1vw 1.5vw;
     font-size: 1.2vw;
+    box-shadow: 0 2px 12px #0004;
 }
 .system-status strong {
     color: #2ecc40;
+}
+@media (max-width: 700px) {
+    .public-date, .public-clock, .weather, .calendar-events h2, .calendar-events li {
+        font-size: 6vw !important;
+    }
+    .calendar-events li span, .calendar-events li .event-date {
+        font-size: 6vw !important;
+    }
 }
 </style>
 
@@ -263,13 +333,12 @@ window.onload = updateClock;
 </script>
 </head>
 
-<body>
+<body class="weather-{{ weather_class }}">
 <div class="public-container">
     <img class="company-logo" src="/static/Opses_Logo.jpg" alt="OPSES Logo">
 
     <div class="public-clock" id="publicclock"></div>
     <div class="public-date">{{ date }}</div>
-
 
     <div class="weather">
         {% if weather %}
@@ -283,21 +352,20 @@ window.onload = updateClock;
         {% endif %}
     </div>
 
-
-    <div class="calendar-events" style="margin-top:4vh;">
-        <h2 style="font-size:4vw;margin:2vh 0 2vh 0;color:#fff;letter-spacing:0.07em;">Upcoming Events</h2>
+    <div class="calendar-events">
+        <h2>Upcoming Events</h2>
         {% if calendar_events and calendar_events|length > 0 %}
-            <ul style="list-style:none;padding:0;margin:0;">
+            <ul>
             {% for event in calendar_events %}
-                <li style="margin-bottom:3vh;font-size:4vw;color:#fff;font-weight:bold;line-height:1.4;">
-                    <span style="color:#2ecc40;font-weight:900;font-size:4.2vw;">{{ event.start[5:16] }}</span>
-                    &mdash; <span style="font-size:4vw;">{{ event.summary }}</span>
-                    {% if event.location %}<span style="color:#aaa;font-size:3vw;"> @ {{ event.location }}</span>{% endif %}
+                <li>
+                    <span class="event-date">{{ event.start[5:16] }}</span>
+                    &mdash; <span>{{ event.summary }}</span>
+                    {% if event.location %}<span class="event-location"> @ {{ event.location }}</span>{% endif %}
                 </li>
             {% endfor %}
             </ul>
         {% else %}
-            <div style="color:#aaa;font-size:3vw;">No upcoming events</div>
+            <div class="no-events">No upcoming events</div>
         {% endif %}
     </div>
 
@@ -359,10 +427,28 @@ def get_weather():
         r = requests.get(url, timeout=5)
         if r.status_code == 200:
             w = r.json()
+            # Weather class for background
+            icon = w['weather'][0]['icon']
+            desc = w['weather'][0]['description'].lower()
+            if 'rain' in desc or 'drizzle' in desc:
+                weather_class = 'rainy'
+            elif 'snow' in desc:
+                weather_class = 'snowy'
+            elif 'cloud' in desc or icon.startswith('03') or icon.startswith('04'):
+                weather_class = 'cloudy'
+            elif 'clear' in desc or icon.startswith('01'):
+                weather_class = 'sunny'
+            elif 'thunder' in desc:
+                weather_class = 'stormy'
+            elif 'mist' in desc or 'fog' in desc or 'haze' in desc:
+                weather_class = 'foggy'
+            else:
+                weather_class = 'default'
             weather = {
                 "temp": int(round(w["main"]["temp"])),
                 "desc": w["weather"][0]["description"].title(),
-                "icon_url": f"https://openweathermap.org/img/wn/{w['weather'][0]['icon']}@4x.png"
+                "icon_url": f"https://openweathermap.org/img/wn/{w['weather'][0]['icon']}@4x.png",
+                "weather_class": weather_class
             }
             with open(WEATHER_CACHE_FILE, "w") as f:
                 json.dump({"timestamp": now.isoformat(), "weather": weather}, f)
@@ -381,13 +467,15 @@ def get_system_status():
 
 @app.route("/")
 def public_info():
+    weather = get_weather()
     return render_template_string(
         TEMPLATE,
         date=get_time_info()["date"],
-        weather=get_weather(),
+        weather=weather,
         sys_status=get_system_status(),
         ssid=WIFI_SSID,
-        calendar_events=get_calendar_events()
+        calendar_events=get_calendar_events(),
+        weather_class=weather["weather_class"] if weather else "default"
     )
 
 # =====================
