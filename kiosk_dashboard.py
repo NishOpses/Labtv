@@ -159,23 +159,18 @@ def background_update_loop():
 # HTML Template
 # =====================
 TEMPLATE = """
-    <div class="presence-events" style="margin-top:4vh;background:rgba(0,0,0,0.13);border-radius:18px;box-shadow:0 2px 12px #0002;padding:2vh 4vw;width:80vw;max-width:900px;">
-        <h2>Colleagues Present in Lab</h2>
+
+    <div class="presence-events" style="position:fixed;left:50%;bottom:2vh;transform:translateX(-50%);background:rgba(0,0,0,0.7);border-radius:12px;box-shadow:0 2px 12px #0002;padding:0.7vh 2vw;min-width:180px;z-index:300;text-align:center;font-size:2vw;max-width:60vw;">
+        <div style="font-size:1.2vw;font-weight:600;color:#fff;margin-bottom:0.5vh;">Lab Presence</div>
         {% if present_colleagues and present_colleagues|length > 0 %}
-            <ul style="list-style:none;padding:0;margin:0;">
-            {% for name in present_colleagues %}
-                <li style="margin-bottom:2vh;font-size:4vw;color:#2ecc40;font-weight:bold;line-height:1.4;text-shadow:0 2px 8px #0006;">{{ name }} (Present)</li>
-            {% endfor %}
-            </ul>
+            <span style="color:#2ecc40;font-weight:bold;">Present: </span>
+            <span style="color:#fff;">{{ present_colleagues|join(', ') }}</span>
         {% else %}
-            <div class="no-events" style="color:#aaa;font-size:3vw;">No colleagues detected</div>
+            <span style="color:#aaa;">No colleagues detected</span>
         {% endif %}
         {% if absent_colleagues and absent_colleagues|length > 0 %}
-            <ul style="list-style:none;padding:0;margin:0;">
-            {% for name in absent_colleagues %}
-                <li style="margin-bottom:2vh;font-size:4vw;color:#e74c3c;font-weight:bold;line-height:1.4;text-shadow:0 2px 8px #0006;">{{ name }} (Absent)</li>
-            {% endfor %}
-            </ul>
+            <br><span style="color:#e74c3c;font-weight:bold;">Absent: </span>
+            <span style="color:#fff;">{{ absent_colleagues|join(', ') }}</span>
         {% endif %}
     </div>
 <!DOCTYPE html>
