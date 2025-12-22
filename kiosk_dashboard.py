@@ -162,11 +162,15 @@ body {
     letter-spacing: 0.08em;
     text-shadow: 0 4px 24px #000a;
     margin-bottom: 1vh;
-    display: inline-block;
+    display: flex;
+    gap: 0.5vw;
+    justify-content: center;
+    align-items: center;
     perspective: 200px;
 }
 .flip {
     animation: flip 0.5s;
+    display: inline-block;
 }
 @keyframes flip {
     0% { transform: rotateX(0deg); }
@@ -341,18 +345,29 @@ body {
 </style>
 
 <script>
-let lastTime = '';
+let last = {h: '', m: '', s: ''};
+function pad(n) { return n.toString().padStart(2, '0'); }
 function updateClock() {
     const now = new Date();
-    const timeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
-    const clockElem = document.getElementById("publicclock");
-    if (clockElem.textContent !== timeStr) {
-        clockElem.textContent = timeStr;
-        clockElem.classList.remove('flip');
-        // Force reflow to restart animation
-        void clockElem.offsetWidth;
-        clockElem.classList.add('flip');
+    const h = pad(now.getHours());
+    const m = pad(now.getMinutes());
+    const s = pad(now.getSeconds());
+    const hourElem = document.getElementById('clock-hour');
+    const minElem = document.getElementById('clock-minute');
+    const secElem = document.getElementById('clock-second');
+    if (last.h !== h) {
+        hourElem.textContent = h;
+        hourElem.classList.remove('flip'); void hourElem.offsetWidth; hourElem.classList.add('flip');
     }
+    if (last.m !== m) {
+        minElem.textContent = m;
+        minElem.classList.remove('flip'); void minElem.offsetWidth; minElem.classList.add('flip');
+    }
+    if (last.s !== s) {
+        secElem.textContent = s;
+        secElem.classList.remove('flip'); void secElem.offsetWidth; secElem.classList.add('flip');
+    }
+    last = {h, m, s};
 }
 setInterval(updateClock, 1000);
 window.onload = updateClock;
@@ -363,7 +378,9 @@ window.onload = updateClock;
 <div class="public-container">
     <img class="company-logo" src="/static/Opses_Logo.jpg" alt="OPSES Logo">
 
-    <div class="public-clock" id="publicclock"></div>
+    <div class="public-clock" id="publicclock">
+        <span id="clock-hour"></span><span>:</span><span id="clock-minute"></span><span>:</span><span id="clock-second"></span>
+    </div>
     <div class="public-date">{{ date }}</div>
 
     <div class="weather">
