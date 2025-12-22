@@ -22,7 +22,6 @@ TEMPLATE = """
             padding: 0;
             width: 100vw;
             height: 100vh;
-        <img class="company-logo" src="/static/Opses_Logo.jpg" alt="OPSES Logo">
         }
         .public-container {
             width: 100vw;
@@ -32,11 +31,19 @@ TEMPLATE = """
             align-items: center;
             justify-content: center;
             background: linear-gradient(180deg, #181c20 60%, #23272b 100%);
+            text-align: center;
         }
         .company-logo {
-            width: 18vw;
-            max-width: 180px;
+            width: 22vw;
+            max-width: 240px;
+            min-width: 120px;
+            min-height: 60px;
             margin-bottom: 2vh;
+            background: #fff;
+            border-radius: 16px;
+            object-fit: contain;
+            display: block;
+            box-shadow: 0 2px 16px #0006;
         }
         .company-name {
             font-size: 3vw;
@@ -53,6 +60,10 @@ TEMPLATE = """
             margin-bottom: 2vh;
             letter-spacing: 0.1em;
             text-shadow: 0 4px 24px #000a;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .public-date {
             font-size: 4vw;
@@ -60,21 +71,14 @@ TEMPLATE = """
             margin-bottom: 1vh;
             font-weight: 500;
         }
-        .public-day {
-            font-size: 3vw;
-            color: #aaa;
-            margin-bottom: 2vh;
-            font-weight: 400;
-        }
         @media (orientation: portrait) {
             .public-container {
                 padding-top: 8vh;
             }
-            .company-logo { width: 22vw; max-width: 220px; }
+            .company-logo { width: 30vw; max-width: 320px; min-width: 140px; }
             .company-name { font-size: 4vw; }
             .public-clock { font-size: 13vw; }
             .public-date { font-size: 5vw; }
-            .public-day { font-size: 4vw; }
         }
     </style>
     <script>
@@ -90,11 +94,10 @@ TEMPLATE = """
 </head>
 <body>
     <div class=\"public-container\">
-        <img class=\"company-logo\" src=\"https://opses.co.uk/wp-content/uploads/2022/09/cropped-opses-logo-green.png\" alt=\"Opses Logo\">
+        <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">
         <div class=\"company-name\">OPSES</div>
         <div class=\"public-clock\" id=\"publicclock\"></div>
         <div class=\"public-date\">{{ date }}</div>
-        <!-- Day removed as per request -->
     </div>
 </body>
 </html>
