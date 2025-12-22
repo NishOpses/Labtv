@@ -1,4 +1,7 @@
+
 #!/bin/bash
+# Prevent script from exiting on error
+set +e
 
 # Auto-update: Pull latest code from git repository
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -85,13 +88,17 @@ fi
 
 
 
+
 while true; do
     # Health check: Restart Chromium if not running
     if ! pgrep -x "chromium-browser" > /dev/null; then
-        echo "Chromium not running! Restarting..."
+        echo "[HEALTH CHECK] Chromium not running! Restarting..."
         launch_chromium
         sleep 10  # Give Chromium a moment to start
+    else
+        echo "[HEALTH CHECK] Chromium is running."
     fi
+
 
     # Check if logged out from Monday and log in if necessary
     check_and_login
