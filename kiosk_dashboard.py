@@ -104,8 +104,8 @@ from useful_info import get_time_info
 # =====================
 app = Flask(__name__)
 
-WIFI_SSID = os.environ.get("WIFI_SSID", "YourSSID")
-WIFI_PASSWORD = os.environ.get("WIFI_PASSWORD", "YourPassword")
+WIFI_SSID = os.environ.get("WIFI_SSID", "Opses_Global_Guest")
+WIFI_PASSWORD = os.environ.get("WIFI_PASSWORD", "Covert3791Beer105%")
 WIFI_AUTH = os.environ.get("WIFI_AUTH", "WPA")
 
 # =====================
