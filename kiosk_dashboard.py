@@ -20,14 +20,14 @@ from ics import Calendar
 # =====================
 # Google Calendar Feed Config
 # =====================
-GOOGLE_ICAL_URL = os.environ.get("GOOGLE_ICAL_URL", "https://calendar.google.com/calendar/ical/00e62f5d1cd53fe8c514d10962c7dc1e53c2a238ef907c5d4422e3f4edad0718%40group.calendar.google.com/public/basic.ics")
+OUTLOOK_ICAL_URL = os.environ.get("OUTLOOK_ICAL_URL", "https://outlook.office365.com/owa/calendar/744e18cdc1534f5dbcdf3283c76a8f8b@opses.co.uk/85260d62ab584bd69aca5ac9a4223dd84268036899588616720/calendar.ics")
 CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.json")
 CALENDAR_CACHE_MINUTES = 15
 
 def get_calendar_events():
     print("[DEBUG] get_calendar_events: Called")
-    if not GOOGLE_ICAL_URL:
-        print("[DEBUG] No GOOGLE_ICAL_URL set")
+    if not OUTLOOK_ICAL_URL:
+        print("[DEBUG] No OUTLOOK_ICAL_URL set")
         return []
     import pytz
     utc = pytz.UTC
@@ -45,8 +45,8 @@ def get_calendar_events():
             print(f"[DEBUG] Error reading calendar cache: {e}")
     # Fetch from iCal feed
     try:
-        print(f"[DEBUG] Fetching ICS feed: {GOOGLE_ICAL_URL}")
-        resp = requests.get(GOOGLE_ICAL_URL, timeout=10)
+        print(f"[DEBUG] Fetching ICS feed: {OUTLOOK_ICAL_URL}")
+        resp = requests.get(OUTLOOK_ICAL_URL, timeout=10)
         print(f"[DEBUG] ICS HTTP status: {resp.status_code}")
         if resp.status_code == 200:
             c = Calendar(resp.text)
