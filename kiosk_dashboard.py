@@ -3,6 +3,23 @@ from ics import Calendar
 # =====================
 # Google Calendar Feed Config
 # =====================
+import os
+import io
+import qrcode
+import psutil
+import threading
+import time
+import subprocess
+import requests
+import json
+from datetime import datetime, timedelta
+from flask import Flask, render_template_string, send_file
+from useful_info import get_time_info
+from ics import Calendar
+
+# =====================
+# Google Calendar Feed Config
+# =====================
 GOOGLE_ICAL_URL = os.environ.get("GOOGLE_ICAL_URL", "https://calendar.google.com/calendar/ical/00e62f5d1cd53fe8c514d10962c7dc1e53c2a238ef907c5d4422e3f4edad0718%40group.calendar.google.com/public/basic.ics")
 CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.json")
 CALENDAR_CACHE_MINUTES = 15
