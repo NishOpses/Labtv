@@ -119,8 +119,21 @@ while true; do
         if (( now - last_launch_time < GRACE_PERIOD )); then
             echo "[HEALTH CHECK] Skipping restart, within grace period."
         else
-            echo "[HEALTH CHECK] Chromium not running! Restarting..."
-            send_teams_notification "Chromium was restarted on $(hostname) at $(date)"
+            # Try to get last Chromium exit reason
+            last_reason="unknown"
+            # Check for recent Chromium crash logs
+            crash_log=$(ls -t /home/$USER/.config/chromium/Crash\ Reports/*.dmp 2>/dev/null | head -n 1)
+            if [ -n "$crash_log" ]; then
+                last_reason="crash dump: $crash_log"
+            else
+                # Check if killed by OOM or signal
+                dmesg_out=$(dmesg | tail -n 50 | grep -i chromium | tail -n 1)
+                if echo "$dmesg_out" | grep -qi kill; then
+                    last_reason="killed: $dmesg_out"
+                fi
+            fi
+            echo "[HEALTH CHECK] Chromium not running! Restarting... Reason: $last_reason"
+            send_teams_notification "Chromium was restarted on $(hostname) at $(date). Reason: $last_reason"
             launch_chromium
             last_launch_time=$(date +%s)
             sleep 10  # Give Chromium a moment to start
