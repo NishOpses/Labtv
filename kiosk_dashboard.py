@@ -29,7 +29,9 @@ def get_calendar_events():
     if not GOOGLE_ICAL_URL:
         print("[DEBUG] No GOOGLE_ICAL_URL set")
         return []
-    now = datetime.utcnow()
+    import pytz
+    utc = pytz.UTC
+    now = datetime.utcnow().replace(tzinfo=utc)
     # Try cache
     if os.path.exists(CALENDAR_CACHE_FILE):
         try:
@@ -50,10 +52,16 @@ def get_calendar_events():
             c = Calendar(resp.text)
             events = []
             for e in sorted(c.timeline, key=lambda ev: ev.begin):
+                # Ensure event datetime is offset-aware (UTC)
+                event_dt = e.begin.datetime
+                if event_dt.tzinfo is None:
+                    event_dt = event_dt.replace(tzinfo=utc)
+                else:
+                    event_dt = event_dt.astimezone(utc)
                 # Only show future events (today and next 7 days)
-                if e.begin.datetime >= now and e.begin.datetime <= now + timedelta(days=7):
+                if event_dt >= now and event_dt <= now + timedelta(days=7):
                     events.append({
-                        "start": e.begin.format('YYYY-MM-DD HH:mm'),
+                        "start": event_dt.strftime('%Y-%m-%d %H:%M'),
                         "summary": e.name or "(No Title)",
                         "location": getattr(e, 'location', None)
                     })
