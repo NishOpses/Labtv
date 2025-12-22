@@ -1,3 +1,12 @@
+# Send notification to Teams when script starts
+send_teams_notification "Kiosk script started successfully on $(hostname) at $(date)"
+TEAMS_WEBHOOK_URL="https://opsesuk.webhook.office.com/webhookb2/02968a36-e73c-4b64-aa3f-104718ca7ebb@22ede163-9eae-47d1-963e-11c4a837b9bf/IncomingWebhook/3b048182065a4aa5963427ff5fa554e8/9cbd54cc-3c40-408a-99a1-24dc533f71db/V2wazg9XK8_QrpqzAZLcEh2unetz4sVAjFbEHvtk0fVFA1"
+
+# Function to send notification to Microsoft Teams
+send_teams_notification() {
+    local message="$1"
+    curl -s -H "Content-Type: application/json" -d "{\"text\": \"$message\"}" "$TEAMS_WEBHOOK_URL"
+}
 
 #!/bin/bash
 # Prevent script from exiting on error
@@ -93,6 +102,7 @@ while true; do
     # Health check: Restart Chromium if not running
     if ! pgrep -x "chromium-browser" > /dev/null; then
         echo "[HEALTH CHECK] Chromium not running! Restarting..."
+        send_teams_notification "Chromium was restarted on $(hostname) at $(date)"
         launch_chromium
         sleep 10  # Give Chromium a moment to start
     else
