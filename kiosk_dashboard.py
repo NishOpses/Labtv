@@ -68,7 +68,7 @@ TEMPLATE = """
         .weather {
             margin-top: 2vh;
             color: #fff;
-            font-size: 2vw;
+            font-size: 4vw;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -76,22 +76,22 @@ TEMPLATE = """
         .weather-row {
             display: flex;
             align-items: center;
-            gap: 1vw;
+            gap: 2vw;
         }
         .weather-icon {
-            width: 4vw;
-            min-width: 48px;
-            max-width: 80px;
+            width: 8vw;
+            min-width: 96px;
+            max-width: 180px;
         }
         .weather-temp {
-            font-size: 3vw;
-            font-weight: 600;
+            font-size: 6vw;
+            font-weight: 700;
             color: #2ecc40;
         }
         .weather-desc {
-            font-size: 1.5vw;
+            font-size: 3vw;
             color: #eee;
-            margin-top: 0.5vh;
+            margin-top: 1vh;
             text-align: center;
         }
         @media (orientation: portrait) {
