@@ -40,7 +40,17 @@ sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' /home/$USER/.config/chr
 sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' /home/$USER/.config/chromium/fault/Preferences
 
 
-# Function to launch Chromium in kiosk mode
+
+# Function to launch Flask dashboard in background
+launch_dashboard() {
+    echo "Starting Flask dashboard..."
+    # Use python3 and run in background, redirect output to log
+    nohup python3 "$SCRIPT_DIR/kiosk_dashboard.py" > "$SCRIPT_DIR/dashboard.log" 2>&1 &
+    DASHBOARD_PID=$!
+    echo "Dashboard launched with PID $DASHBOARD_PID"
+}
+
+# Function to launch Chromium in kiosk mode with dashboard and all other web pages
 launch_chromium() {
     /usr/bin/chromium-browser --noerrdialogs \
         --disable-infobars \
@@ -49,6 +59,7 @@ launch_chromium() {
         --disable-popup-blocking \
         --start-maximized \
         --kiosk \
+        "http://localhost:5000" \
         "https://opses-verto.glide.page/dl/dash" \
         "https://opses-verto.glide.page/dl/orders" \
         "https://opses-company.monday.com/boards/1790536551" \
@@ -60,7 +71,10 @@ launch_chromium() {
 
 
 
+
 # Initial launch
+launch_dashboard
+sleep 5  # Give dashboard a moment to start
 launch_chromium
 
 # Wait for Chromium to start

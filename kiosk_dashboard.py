@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, redirect, url_for
 import subprocess
 import os
 import time
@@ -6,50 +6,40 @@ from useful_info import get_time_info, get_hostname, get_os_info
 
 app = Flask(__name__)
 
+
 TEMPLATE = """
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>
     <meta charset=\"UTF-8\">
-    <title>Kiosk Status Dashboard</title>
+    <title>Kiosk Public Info</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-        .container { max-width: 700px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
-        h1 { color: #333; }
-        .status { font-size: 1.2em; margin-bottom: 20px; }
-        .log { background: #222; color: #eee; padding: 10px; border-radius: 4px; font-size: 0.95em; max-height: 200px; overflow-y: auto; }
-        .info { margin-bottom: 20px; }
-        .clock { font-size: 2em; font-weight: bold; color: #2a2; margin-bottom: 10px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #181c20; margin: 0; padding: 0; }
+        .public-container { max-width: 100vw; min-height: 100vh; background: #181c20; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .public-clock { font-size: 7em; font-weight: bold; color: #2ecc40; margin-bottom: 0.2em; letter-spacing: 4px; }
+        .public-date { font-size: 3em; color: #fff; margin-bottom: 0.2em; }
+        .public-day { font-size: 2.2em; color: #aaa; margin-bottom: 0.5em; }
+        .public-host { font-size: 1.5em; color: #2ecc40; margin-bottom: 0.2em; }
+        .public-os { font-size: 1.2em; color: #aaa; }
     </style>
     <script>
     function updateClock() {
         var now = new Date();
-        var time = now.toLocaleTimeString();
-        document.getElementById('liveclock').textContent = time;
+        var time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        var pubclock = document.getElementById('publicclock');
+        if (pubclock) pubclock.textContent = time;
     }
     setInterval(updateClock, 1000);
     window.onload = updateClock;
     </script>
 </head>
 <body>
-    <div class=\"container\">
-        <h1>Kiosk Status Dashboard</h1>
-        <div class=\"info\">
-            <div class=\"clock\"><span id=\"liveclock\"></span></div>
-            <strong>Date:</strong> {{ date }}<br>
-            <strong>Day:</strong> {{ day }}<br>
-            <strong>Hostname:</strong> {{ hostname }}<br>
-            <strong>OS:</strong> {{ osinfo }}<br>
-        </div>
-        <div class=\"status\">
-            <strong>Chromium Status:</strong> {{ chromium_status }}<br>
-            <strong>Last Restart Reason:</strong> {{ last_reason }}<br>
-            <strong>System Uptime:</strong> {{ uptime }}<br>
-        </div>
-        <h2>Recent Log</h2>
-        <div class=\"log\">
-            <pre>{{ log }}</pre>
-        </div>
+    <div class=\"public-container\">
+        <div class=\"public-clock\" id=\"publicclock\"></div>
+        <div class=\"public-date\">{{ date }}</div>
+        <div class=\"public-day\">{{ day }}</div>
+        <div class=\"public-host\">{{ hostname }}</div>
+        <div class=\"public-os\">{{ osinfo }}</div>
     </div>
 </body>
 </html>
@@ -86,14 +76,13 @@ def get_recent_log():
         return "No log file found."
 
 @app.route("/")
-def dashboard():
+
+# Redirect root to /public so the kiosk always starts with the public info tab
+@app.route("/")
+def public_info():
     time_info = get_time_info()
     return render_template_string(
         TEMPLATE,
-        chromium_status=get_chromium_status(),
-        last_reason=get_last_reason(),
-        uptime=get_uptime(),
-        log=get_recent_log(),
         date=time_info['date'],
         day=time_info['day'],
         hostname=get_hostname(),
