@@ -2,33 +2,52 @@ from flask import Flask, render_template_string
 import subprocess
 import os
 import time
+from useful_info import get_time_info, get_hostname, get_os_info
 
 app = Flask(__name__)
 
 TEMPLATE = """
 <!DOCTYPE html>
-<html lang="en">
+<html lang=\"en\">
 <head>
-    <meta charset="UTF-8">
+    <meta charset=\"UTF-8\">
     <title>Kiosk Status Dashboard</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
+        .container { max-width: 700px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
         h1 { color: #333; }
         .status { font-size: 1.2em; margin-bottom: 20px; }
         .log { background: #222; color: #eee; padding: 10px; border-radius: 4px; font-size: 0.95em; max-height: 200px; overflow-y: auto; }
+        .info { margin-bottom: 20px; }
+        .clock { font-size: 2em; font-weight: bold; color: #2a2; margin-bottom: 10px; }
     </style>
+    <script>
+    function updateClock() {
+        var now = new Date();
+        var time = now.toLocaleTimeString();
+        document.getElementById('liveclock').textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    window.onload = updateClock;
+    </script>
 </head>
 <body>
-    <div class="container">
+    <div class=\"container\">
         <h1>Kiosk Status Dashboard</h1>
-        <div class="status">
+        <div class=\"info\">
+            <div class=\"clock\"><span id=\"liveclock\"></span></div>
+            <strong>Date:</strong> {{ date }}<br>
+            <strong>Day:</strong> {{ day }}<br>
+            <strong>Hostname:</strong> {{ hostname }}<br>
+            <strong>OS:</strong> {{ osinfo }}<br>
+        </div>
+        <div class=\"status\">
             <strong>Chromium Status:</strong> {{ chromium_status }}<br>
             <strong>Last Restart Reason:</strong> {{ last_reason }}<br>
             <strong>System Uptime:</strong> {{ uptime }}<br>
         </div>
         <h2>Recent Log</h2>
-        <div class="log">
+        <div class=\"log\">
             <pre>{{ log }}</pre>
         </div>
     </div>
@@ -68,12 +87,17 @@ def get_recent_log():
 
 @app.route("/")
 def dashboard():
+    time_info = get_time_info()
     return render_template_string(
         TEMPLATE,
         chromium_status=get_chromium_status(),
         last_reason=get_last_reason(),
         uptime=get_uptime(),
-        log=get_recent_log()
+        log=get_recent_log(),
+        date=time_info['date'],
+        day=time_info['day'],
+        hostname=get_hostname(),
+        osinfo=get_os_info()
     )
 
 if __name__ == "__main__":
