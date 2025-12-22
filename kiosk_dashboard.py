@@ -240,23 +240,13 @@ def health():
         net_str = f"Net: {', '.join(up)}" if up else "Net: Down"
     except Exception:
         net_str = "Net: N/A"
+
     return {"health": f"CPU: {temp_str}\n{disk_str}\n{net_str}"}
-</body>
-</html>
+
 """
+
 import platform
 import psutil
-@app.route("/status")
-def status():
-    # Uptime in human readable form
-    <script>
-        function updateClock() {
-            var now = new Date();
-            var time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-            var pubclock = document.getElementById('publicclock');
-            if (pubclock) pubclock.textContent = time;
-        }
-        setInterval(updateClock, 1000);
 
         function updateStatus() {
             fetch('/status').then(r => r.json()).then(data => {
