@@ -107,13 +107,24 @@ fi
 
 
 
+
+# Add a grace period after launching Chromium to avoid false restarts
+GRACE_PERIOD=30
+last_launch_time=$(date +%s)
+
 while true; do
     # Health check: Restart Chromium if not running
-    if ! pgrep -x "chromium-browser" > /dev/null; then
-        echo "[HEALTH CHECK] Chromium not running! Restarting..."
-        send_teams_notification "Chromium was restarted on $(hostname) at $(date)"
-        launch_chromium
-        sleep 10  # Give Chromium a moment to start
+    if ! pgrep -f chromium > /dev/null; then
+        now=$(date +%s)
+        if (( now - last_launch_time < GRACE_PERIOD )); then
+            echo "[HEALTH CHECK] Skipping restart, within grace period."
+        else
+            echo "[HEALTH CHECK] Chromium not running! Restarting..."
+            send_teams_notification "Chromium was restarted on $(hostname) at $(date)"
+            launch_chromium
+            last_launch_time=$(date +%s)
+            sleep 10  # Give Chromium a moment to start
+        fi
     else
         echo "[HEALTH CHECK] Chromium is running."
     fi
