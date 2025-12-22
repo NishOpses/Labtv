@@ -90,30 +90,63 @@ body {
     font-size: 4vw;
     color: #fff;
 }
-.weather {
-    margin-top: 2vh;
-    color: #fff;
-}
-.weather-row {
-    display: flex;
-    align-items: center;
-    gap: 2vw;
-}
-.weather-icon {
-    width: 8vw;
-}
-.weather-temp {
-    font-size: 6vw;
-    color: #2ecc40;
-}
-.wifi-qr {
-    margin-top: 4vh;
-}
-.wifi-qr img {
-    width: 22vw;
-    background: #fff;
-    border-radius: 12px;
-}
+    .weather {
+        margin-top: 2vh;
+        color: #fff;
+        font-size: 4vw;
+        font-weight: bold;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .weather-row {
+        display: flex;
+        align-items: center;
+        gap: 3vw;
+    }
+    .weather-icon {
+        width: 12vw;
+        min-width: 140px;
+        max-width: 260px;
+    }
+    .weather-temp {
+        font-size: 8vw;
+        color: #2ecc40;
+        font-weight: 900;
+        margin-left: 2vw;
+    }
+    .weather-desc {
+        font-size: 3vw;
+        margin-top: 1vh;
+        color: #eee;
+    }
+    .wifi-qr {
+        position: fixed;
+        left: 2vw;
+        bottom: 2vh;
+        margin: 0;
+        z-index: 200;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        background: rgba(24,28,32,0.92);
+        padding: 1vw 1.5vw;
+        border-radius: 14px;
+        box-shadow: 0 2px 12px #0004;
+    }
+    .wifi-qr img {
+        width: 14vw;
+        min-width: 90px;
+        max-width: 180px;
+        background: #fff;
+        border-radius: 10px;
+        margin-top: 0.5vh;
+    }
+    .wifi-qr-label {
+        color: #fff;
+        font-size: 1.2vw;
+        margin-bottom: 0.5vh;
+    }
 .system-status {
     position: fixed;
     right: 2vw;
@@ -153,15 +186,17 @@ window.onload = updateClock;
             <img class="weather-icon" src="{{ weather.icon_url }}">
             <span class="weather-temp">{{ weather.temp }}°C</span>
         </div>
-        <div>{{ weather.desc }}</div>
+        <div class="weather-desc">{{ weather.desc }}</div>
         {% else %}
-        <div>Weather unavailable</div>
+        <div class="weather-desc">Weather unavailable</div>
         {% endif %}
     </div>
 
+    <!-- QR code moved to bottom left -->
     <div class="wifi-qr">
-        <div>WiFi: {{ ssid }}</div>
+        <div class="wifi-qr-label">WiFi: {{ ssid }}</div>
         <img src="/wifi_qr">
+        <div class="wifi-qr-label">Scan to connect</div>
     </div>
 </div>
 
