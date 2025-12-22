@@ -261,7 +261,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    background: rgba(255,255,255,0.80);
+    background: #000;
     padding: 1vw 1.5vw;
     border-radius: 16px;
     box-shadow: 0 4px 24px #0002;
@@ -286,7 +286,7 @@ body {
     position: fixed;
     right: 2vw;
     bottom: 2vh;
-    background: rgba(255,255,255,0.18);
+    background: #000;
     color: #fff;
     border-radius: 16px;
     padding: 1vw 1.5vw;
