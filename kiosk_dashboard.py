@@ -25,7 +25,9 @@ CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.js
 CALENDAR_CACHE_MINUTES = 15
 
 def get_calendar_events():
+    print("[DEBUG] get_calendar_events: Called")
     if not GOOGLE_ICAL_URL:
+        print("[DEBUG] No GOOGLE_ICAL_URL set")
         return []
     now = datetime.utcnow()
     # Try cache
@@ -35,12 +37,15 @@ def get_calendar_events():
                 data = json.load(f)
             ts = datetime.fromisoformat(data.get("timestamp"))
             if (now - ts) < timedelta(minutes=CALENDAR_CACHE_MINUTES):
+                print(f"[DEBUG] Using cached calendar events: {len(data['events'])} events")
                 return data["events"]
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[DEBUG] Error reading calendar cache: {e}")
     # Fetch from iCal feed
     try:
+        print(f"[DEBUG] Fetching ICS feed: {GOOGLE_ICAL_URL}")
         resp = requests.get(GOOGLE_ICAL_URL, timeout=10)
+        print(f"[DEBUG] ICS HTTP status: {resp.status_code}")
         if resp.status_code == 200:
             c = Calendar(resp.text)
             events = []
@@ -54,11 +59,14 @@ def get_calendar_events():
                     })
                     if len(events) >= 5:
                         break
+            print(f"[DEBUG] Parsed {len(events)} upcoming events from ICS feed")
             with open(CALENDAR_CACHE_FILE, "w") as f:
                 json.dump({"timestamp": now.isoformat(), "events": events}, f)
             return events
-    except Exception:
-        pass
+        else:
+            print(f"[DEBUG] ICS feed fetch failed with status {resp.status_code}")
+    except Exception as e:
+        print(f"[DEBUG] Exception fetching/parsing ICS feed: {e}")
     return []
 from flask import Flask, render_template_string, send_file
 import io
