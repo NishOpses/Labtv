@@ -26,10 +26,19 @@ from ics import Calendar
 
 # =====================
 # Google Calendar Feed Config
+
 # =====================
 OUTLOOK_ICAL_URL = os.environ.get("OUTLOOK_ICAL_URL", "https://outlook.office365.com/owa/calendar/744e18cdc1534f5dbcdf3283c76a8f8b@opses.co.uk/85260d62ab584bd69aca5ac9a4223dd84268036899588616720/calendar.ics")
 CALENDAR_CACHE_FILE = os.path.join(os.path.dirname(__file__), "calendar_cache.json")
 CALENDAR_CACHE_MINUTES = 15
+
+# Clear old calendar cache to force new ICS fetch
+if os.path.exists(CALENDAR_CACHE_FILE):
+    try:
+        os.remove(CALENDAR_CACHE_FILE)
+        print('[DEBUG] Cleared old calendar cache file to force new ICS fetch.')
+    except Exception as e:
+        print(f'[DEBUG] Could not remove calendar cache: {e}')
 
 def get_calendar_events():
     print("[DEBUG] get_calendar_events: Called")
