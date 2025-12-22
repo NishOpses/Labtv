@@ -1,3 +1,19 @@
+import io
+import qrcode
+from flask import send_file
+# WiFi QR code config (edit as needed)
+WIFI_SSID = "LabWiFi"
+WIFI_PASSWORD = "LabPassword123"
+WIFI_AUTH = "WPA"  # or "WEP" or "nopass"
+# Serve QR code image
+@app.route("/wifi_qr")
+def wifi_qr():
+    qr_data = f"WIFI:T:{WIFI_AUTH};S:{WIFI_SSID};P:{WIFI_PASSWORD};;"
+    img = qrcode.make(qr_data)
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return send_file(buf, mimetype="image/png")
 
 from flask import Flask, render_template_string
 import os
@@ -9,6 +25,26 @@ from useful_info import get_time_info
 app = Flask(__name__)
 
 TEMPLATE = """
+</style>
+<style>
+    .health-indicator {
+        position: fixed;
+        left: 2vw;
+        bottom: 2vh;
+        background: rgba(24,28,32,0.92);
+        color: #fff;
+        font-size: 1.2vw;
+        padding: 0.7vw 1.5vw;
+        border-radius: 1vw;
+        box-shadow: 0 2px 12px #0006;
+        z-index: 100;
+        opacity: 0.92;
+        min-width: 180px;
+        text-align: left;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        letter-spacing: 0.03em;
+    }
+</style>
 <!DOCTYPE html>
 <html lang=\"en\">
 <head>
@@ -18,7 +54,6 @@ TEMPLATE = """
     <style>
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            background: #181c20;
             margin: 0;
             padding: 0;
             width: 100vw;
@@ -31,10 +66,16 @@ TEMPLATE = """
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            background: linear-gradient(180deg, #181c20 60%, #23272b 100%);
             text-align: center;
             padding-top: 8vh;
         }
+        .bg-clear { background: linear-gradient(180deg, #87ceeb 60%, #f0f8ff 100%); }
+        .bg-clouds { background: linear-gradient(180deg, #b0bec5 60%, #eceff1 100%); }
+        .bg-rain { background: linear-gradient(180deg, #607d8b 60%, #b0bec5 100%); }
+        .bg-thunderstorm { background: linear-gradient(180deg, #37474f 60%, #607d8b 100%); }
+        .bg-snow { background: linear-gradient(180deg, #e0f7fa 60%, #ffffff 100%); }
+        .bg-mist { background: linear-gradient(180deg, #cfd8dc 60%, #eceff1 100%); }
+        .bg-default { background: linear-gradient(180deg, #181c20 60%, #23272b 100%); }
         .company-logo {
             width: 32vw;
             max-width: 340px;
@@ -145,9 +186,13 @@ window.onload = function() { updateClock(); updateStatus(); };
 </script>
 </head>
 <body>
-    <div class=\"public-container\">
+    <div class=\"public-container {{ bg_class }}\">
         <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">
         <div class=\"public-clock\" id=\"publicclock\"></div>
+        <div style="position:fixed; bottom:2vh; right:2vw; z-index:101; display:flex; flex-direction:column; align-items:center;">
+            <img src="/wifi_qr" alt="WiFi QR" style="width:120px; height:120px; background:#fff; border-radius:16px; box-shadow:0 2px 12px #0006; margin-bottom:0.5vw;">
+            <div style="color:#fff; font-size:1vw; text-align:center; background:rgba(24,28,32,0.7); border-radius:0.5vw; padding:0.2vw 0.7vw;">WiFi: {{ ssid }}</div>
+        </div>
         <div class=\"public-date\">{{ date }}</div>
         <div class=\"weather\">
             {% if weather %}
@@ -162,6 +207,40 @@ window.onload = function() { updateClock(); updateStatus(); };
         </div>
     </div>
     <div class="status-indicator" id="status-indicator">Loading status...</div>
+    <div class="health-indicator" id="health-indicator">Loading health...</div>
+@app.route("/health")
+def health():
+    import shutil
+    # CPU temp (Raspberry Pi or Linux)
+    try:
+        temp = None
+        if os.path.exists("/sys/class/thermal/thermal_zone0/temp"):
+            with open("/sys/class/thermal/thermal_zone0/temp") as f:
+                temp = float(f.read()) / 1000.0
+        elif hasattr(psutil, "sensors_temperatures"):
+            temps = psutil.sensors_temperatures()
+            for name, entries in temps.items():
+                for entry in entries:
+                    if entry.current and ("cpu" in entry.label.lower() or "core" in entry.label.lower()):
+                        temp = entry.current
+                        break
+        temp_str = f"{temp:.1f}°C" if temp else "N/A"
+    except Exception:
+        temp_str = "N/A"
+    # Disk usage
+    try:
+        du = shutil.disk_usage("/")
+        disk_str = f"Disk: {du.free//(1024*1024)}MB free"
+    except Exception:
+        disk_str = "Disk: N/A"
+    # Network status
+    try:
+        net = psutil.net_if_stats()
+        up = [k for k,v in net.items() if v.isup and not k.startswith('lo')]
+        net_str = f"Net: {', '.join(up)}" if up else "Net: Down"
+    except Exception:
+        net_str = "Net: N/A"
+    return {"health": f"CPU: {temp_str}\n{disk_str}\n{net_str}"}
 </body>
 </html>
 """
@@ -170,32 +249,59 @@ import psutil
 @app.route("/status")
 def status():
     # Uptime in human readable form
-    try:
-        boot = psutil.boot_time()
-        now = datetime.now().timestamp()
-        uptime_sec = int(now - boot)
-        days, rem = divmod(uptime_sec, 86400)
-        hours, rem = divmod(rem, 3600)
-        minutes, _ = divmod(rem, 60)
-        if days > 0:
-            upstr = f"Uptime: {days}d {hours}h {minutes}m"
-        elif hours > 0:
-            upstr = f"Uptime: {hours}h {minutes}m"
-        else:
-            upstr = f"Uptime: {minutes}m"
-        status = upstr + "  |  System OK"
-    except Exception:
-        status = "Status unavailable"
-    return {"status": status}
+    <script>
+        function updateClock() {
+            var now = new Date();
+            var time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+            var pubclock = document.getElementById('publicclock');
+            if (pubclock) pubclock.textContent = time;
+        }
+        setInterval(updateClock, 1000);
 
-# Weather caching logic
-WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
-WEATHER_API_KEY = "144536c74a836feb69c1cd449b8457b9"
+        function updateStatus() {
+            fetch('/status').then(r => r.json()).then(data => {
+                var el = document.getElementById('status-indicator');
+                if (el) {
+                    el.textContent = data.status;
+                }
+            });
+        }
+        setInterval(updateStatus, 30000);
+
+        function updateHealth() {
+            fetch('/health').then(r => r.json()).then(data => {
+                var el = document.getElementById('health-indicator');
+                if (el) {
+                    el.textContent = data.health;
+                }
+            });
+        }
+        setInterval(updateHealth, 30000);
+
+        window.onload = function() { updateClock(); updateStatus(); updateHealth(); };
+    </script>
 WEATHER_LAT = 51.0902
 WEATHER_LON = -1.1662
 WEATHER_CACHE_MINUTES = 15  # 96 calls/day max
 
 def get_weather():
+    def get_bg_class(weather):
+        if not weather or 'desc' not in weather:
+            return 'bg-default'
+        desc = weather['desc'].lower()
+        if 'clear' in desc:
+            return 'bg-clear'
+        if 'cloud' in desc:
+            return 'bg-clouds'
+        if 'rain' in desc or 'drizzle' in desc:
+            return 'bg-rain'
+        if 'thunder' in desc:
+            return 'bg-thunderstorm'
+        if 'snow' in desc:
+            return 'bg-snow'
+        if 'mist' in desc or 'fog' in desc or 'haze' in desc:
+            return 'bg-mist'
+        return 'bg-default'
     now = datetime.utcnow()
     # Try cache
     if os.path.exists(WEATHER_CACHE_FILE):
@@ -229,10 +335,13 @@ def get_weather():
 def public_info():
     time_info = get_time_info()
     weather = get_weather()
+    bg_class = get_bg_class(weather)
     return render_template_string(
         TEMPLATE,
         date=time_info['date'],
-        weather=weather
+        weather=weather,
+        bg_class=bg_class
+            ssid=WIFI_SSID
     )
 
 if __name__ == "__main__":
