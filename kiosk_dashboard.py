@@ -1,6 +1,8 @@
-# Announcement file path
-ANNOUNCEMENT_FILE = os.path.join(os.path.dirname(__file__), "announcements.json")
+def get_announcement():
 
+# Announcement file path and loader (moved after imports)
+
+ANNOUNCEMENT_FILE = os.path.join(os.path.dirname(__file__), "announcements.json")
 def get_announcement():
     try:
         with open(ANNOUNCEMENT_FILE, "r") as f:
