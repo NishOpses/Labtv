@@ -1,3 +1,10 @@
+import os
+if os.path.exists(CALENDAR_CACHE_FILE):
+    try:
+        os.remove(CALENDAR_CACHE_FILE)
+        print('[DEBUG] Cleared old calendar cache file to force new ICS fetch.')
+    except Exception as e:
+        print(f'[DEBUG] Could not remove calendar cache: {e}')
 from ics import Calendar
 
 # =====================
