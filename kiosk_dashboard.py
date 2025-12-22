@@ -8,7 +8,13 @@ import json
 from datetime import datetime, timedelta
 from useful_info import get_time_info
 
+
 app = Flask(__name__)
+
+# Weather API config (edit as needed)
+WEATHER_LAT = 52.9548  # Example: Nottingham latitude
+WEATHER_LON = -1.1662  # Example: Nottingham longitude
+WEATHER_API_KEY = "144536c74a836feb69c1cd449b8457b9"  # <-- Replace with your OpenWeatherMap API key
 
 
 # WiFi QR code config (edit as needed)
@@ -219,27 +225,27 @@ window.onload = function() { updateClock(); updateStatus(); };
 
 import platform
 import psutil
-WEATHER_LON = -1.1662
 WEATHER_CACHE_MINUTES = 15  # 96 calls/day max
 
-def get_weather():
-    def get_bg_class(weather):
-        if not weather or 'desc' not in weather:
-            return 'bg-default'
-        desc = weather['desc'].lower()
-        if 'clear' in desc:
-            return 'bg-clear'
-        if 'cloud' in desc:
-            return 'bg-clouds'
-        if 'rain' in desc or 'drizzle' in desc:
-            return 'bg-rain'
-        if 'thunder' in desc:
-            return 'bg-thunderstorm'
-        if 'snow' in desc:
-            return 'bg-snow'
-        if 'mist' in desc or 'fog' in desc or 'haze' in desc:
-            return 'bg-mist'
+def get_bg_class(weather):
+    if not weather or 'desc' not in weather:
         return 'bg-default'
+    desc = weather['desc'].lower()
+    if 'clear' in desc:
+        return 'bg-clear'
+    if 'cloud' in desc:
+        return 'bg-clouds'
+    if 'rain' in desc or 'drizzle' in desc:
+        return 'bg-rain'
+    if 'thunder' in desc:
+        return 'bg-thunderstorm'
+    if 'snow' in desc:
+        return 'bg-snow'
+    if 'mist' in desc or 'fog' in desc or 'haze' in desc:
+        return 'bg-mist'
+    return 'bg-default'
+
+def get_weather():
     now = datetime.utcnow()
     # Try cache
     if os.path.exists(WEATHER_CACHE_FILE):
@@ -282,8 +288,7 @@ def public_info():
         ssid=WIFI_SSID
     )
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8081, debug=True)
+
 
 def get_chromium_status():
     try:
