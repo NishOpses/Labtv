@@ -414,7 +414,27 @@ def get_weather():
                 data = json.load(f)
             ts = datetime.fromisoformat(data["timestamp"])
             if (now - ts) < timedelta(minutes=WEATHER_CACHE_MINUTES):
-                return data["weather"]
+                weather = data["weather"]
+                # Ensure weather_class is present
+                if "weather_class" not in weather:
+                    icon = weather.get('icon_url', '')
+                    desc = weather.get('desc', '').lower()
+                    if 'rain' in desc or 'drizzle' in desc:
+                        weather_class = 'rainy'
+                    elif 'snow' in desc:
+                        weather_class = 'snowy'
+                    elif 'cloud' in desc or (icon and (icon.endswith('03.png') or icon.endswith('04.png'))):
+                        weather_class = 'cloudy'
+                    elif 'clear' in desc or (icon and icon.endswith('01.png')):
+                        weather_class = 'sunny'
+                    elif 'thunder' in desc:
+                        weather_class = 'stormy'
+                    elif 'mist' in desc or 'fog' in desc or 'haze' in desc:
+                        weather_class = 'foggy'
+                    else:
+                        weather_class = 'default'
+                    weather['weather_class'] = weather_class
+                return weather
         except Exception:
             pass
 
