@@ -10,10 +10,14 @@ from useful_info import get_time_info
 
 app = Flask(__name__)
 
+
 # WiFi QR code config (edit as needed)
 WIFI_SSID = "LabWiFi"
 WIFI_PASSWORD = "LabPassword123"
 WIFI_AUTH = "WPA"  # or "WEP" or "nopass"
+
+# Weather cache file definition
+WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
 
 # Serve QR code image
 @app.route("/wifi_qr")
@@ -311,16 +315,8 @@ def get_recent_log():
     except Exception:
         return "No log file found."
 
-@app.route("/")
 
-# Redirect root to /public so the kiosk always starts with the public info tab
-@app.route("/")
-def public_info():
-    time_info = get_time_info()
-    return render_template_string(
-        TEMPLATE,
-        date=time_info['date']
-    )
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8081, debug=True)
