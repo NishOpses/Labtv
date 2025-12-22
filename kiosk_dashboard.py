@@ -13,14 +13,69 @@ TEMPLATE = """
 <head>
     <meta charset=\"UTF-8\">
     <title>Kiosk Public Info</title>
+    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no\">
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #181c20; margin: 0; padding: 0; }
-        .public-container { max-width: 100vw; min-height: 100vh; background: #181c20; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .public-clock { font-size: 7em; font-weight: bold; color: #2ecc40; margin-bottom: 0.2em; letter-spacing: 4px; }
-        .public-date { font-size: 3em; color: #fff; margin-bottom: 0.2em; }
-        .public-day { font-size: 2.2em; color: #aaa; margin-bottom: 0.5em; }
-        .public-host { font-size: 1.5em; color: #2ecc40; margin-bottom: 0.2em; }
-        .public-os { font-size: 1.2em; color: #aaa; }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #181c20;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .public-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, #181c20 60%, #23272b 100%);
+        }
+        .company-logo {
+            width: 18vw;
+            max-width: 180px;
+            margin-bottom: 2vh;
+        }
+        .company-name {
+            font-size: 3vw;
+            color: #2ecc40;
+            font-weight: bold;
+            margin-bottom: 2vh;
+            letter-spacing: 0.1em;
+            text-shadow: 0 2px 12px #000a;
+        }
+        .public-clock {
+            font-size: 10vw;
+            font-weight: bold;
+            color: #2ecc40;
+            margin-bottom: 2vh;
+            letter-spacing: 0.1em;
+            text-shadow: 0 4px 24px #000a;
+        }
+        .public-date {
+            font-size: 4vw;
+            color: #fff;
+            margin-bottom: 1vh;
+            font-weight: 500;
+        }
+        .public-day {
+            font-size: 3vw;
+            color: #aaa;
+            margin-bottom: 2vh;
+            font-weight: 400;
+        }
+        @media (orientation: portrait) {
+            .public-container {
+                padding-top: 8vh;
+            }
+            .company-logo { width: 22vw; max-width: 220px; }
+            .company-name { font-size: 4vw; }
+            .public-clock { font-size: 13vw; }
+            .public-date { font-size: 5vw; }
+            .public-day { font-size: 4vw; }
+        }
     </style>
     <script>
     function updateClock() {
@@ -35,11 +90,11 @@ TEMPLATE = """
 </head>
 <body>
     <div class=\"public-container\">
+        <img class=\"company-logo\" src=\"https://opses.co.uk/wp-content/uploads/2022/09/cropped-opses-logo-green.png\" alt=\"Opses Logo\">
+        <div class=\"company-name\">OPSES</div>
         <div class=\"public-clock\" id=\"publicclock\"></div>
         <div class=\"public-date\">{{ date }}</div>
-        <div class=\"public-day\">{{ day }}</div>
-        <div class=\"public-host\">{{ hostname }}</div>
-        <div class=\"public-os\">{{ osinfo }}</div>
+        <!-- Day removed as per request -->
     </div>
 </body>
 </html>
@@ -83,10 +138,7 @@ def public_info():
     time_info = get_time_info()
     return render_template_string(
         TEMPLATE,
-        date=time_info['date'],
-        day=time_info['day'],
-        hostname=get_hostname(),
-        osinfo=get_os_info()
+        date=time_info['date']
     )
 
 if __name__ == "__main__":
