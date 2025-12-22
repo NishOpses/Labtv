@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 import os
 import io
 import qrcode
@@ -9,34 +11,6 @@ import requests
 import json
 from datetime import datetime, timedelta
 from flask import Flask, render_template_string, send_file, request, jsonify
-# =====================
-# Announcement Feature
-# =====================
-ANNOUNCEMENTS_FILE = os.path.join(os.path.dirname(__file__), "announcements.json")
-def get_announcements():
-    try:
-        with open(ANNOUNCEMENTS_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"[DEBUG] Error loading announcements: {e}")
-        return []
-
-# Optional: API to update announcements (POST JSON array)
-@app.route("/announcements", methods=["GET", "POST"])
-def announcements_api():
-    if request.method == "POST":
-        try:
-            data = request.get_json(force=True)
-            if isinstance(data, list):
-                with open(ANNOUNCEMENTS_FILE, "w", encoding="utf-8") as f:
-                    json.dump(data, f, ensure_ascii=False, indent=2)
-                return jsonify({"status": "ok"})
-            else:
-                return jsonify({"status": "error", "message": "Expected a list"}), 400
-        except Exception as e:
-            return jsonify({"status": "error", "message": str(e)}), 400
-    else:
-        return jsonify(get_announcements())
 from useful_info import get_time_info
 from ics import Calendar
 
@@ -406,18 +380,6 @@ window.onload = updateClock;
     </div>
 
 
-    <div class="announcements" style="margin-top:4vh;background:rgba(0,0,0,0.13);border-radius:18px;box-shadow:0 2px 12px #0002;padding:2vh 4vw;width:80vw;max-width:900px;">
-        <h2>Announcements</h2>
-        {% if announcements and announcements|length > 0 %}
-            <ul style="list-style:none;padding:0;margin:0;">
-            {% for a in announcements %}
-                <li style="margin-bottom:2vh;font-size:4vw;color:#ffeb3b;font-weight:bold;line-height:1.4;text-shadow:0 2px 8px #0006;">{{ a }}</li>
-            {% endfor %}
-            </ul>
-        {% else %}
-            <div class="no-events" style="color:#aaa;font-size:3vw;">No announcements</div>
-        {% endif %}
-    </div>
 
     <div class="calendar-events">
         <h2>Upcoming Events</h2>
@@ -562,7 +524,6 @@ def public_info():
         sys_status=get_system_status(),
         ssid=WIFI_SSID,
         calendar_events=get_calendar_events(),
-        announcements=get_announcements(),
         weather_class=weather["weather_class"] if weather else "default"
     )
 
