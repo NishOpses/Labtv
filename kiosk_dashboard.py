@@ -169,8 +169,7 @@ body {
     perspective: 200px;
 }
 .flip {
-    animation: flip 0.5s;
-    display: inline-block;
+    /* flip animation removed */
 }
 @keyframes flip {
     0% { transform: rotateX(0deg); }
@@ -345,29 +344,12 @@ body {
 </style>
 
 <script>
-let last = {h: '', m: '', s: ''};
 function pad(n) { return n.toString().padStart(2, '0'); }
 function updateClock() {
     const now = new Date();
-    const h = pad(now.getHours());
-    const m = pad(now.getMinutes());
-    const s = pad(now.getSeconds());
-    const hourElem = document.getElementById('clock-hour');
-    const minElem = document.getElementById('clock-minute');
-    const secElem = document.getElementById('clock-second');
-    if (last.h !== h) {
-        hourElem.textContent = h;
-        hourElem.classList.remove('flip'); void hourElem.offsetWidth; hourElem.classList.add('flip');
-    }
-    if (last.m !== m) {
-        minElem.textContent = m;
-        minElem.classList.remove('flip'); void minElem.offsetWidth; minElem.classList.add('flip');
-    }
-    if (last.s !== s) {
-        secElem.textContent = s;
-        secElem.classList.remove('flip'); void secElem.offsetWidth; secElem.classList.add('flip');
-    }
-    last = {h, m, s};
+    document.getElementById('clock-hour').textContent = pad(now.getHours());
+    document.getElementById('clock-minute').textContent = pad(now.getMinutes());
+    document.getElementById('clock-second').textContent = pad(now.getSeconds());
 }
 setInterval(updateClock, 1000);
 window.onload = updateClock;
