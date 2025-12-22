@@ -7,7 +7,7 @@ After=graphical.target
 Environment=DISPLAY=:0
 Environment=XAUTHORITY=/home/opses/.Xauthority
 Type=simple
-ExecStart=/bin/bash /home/opses/kiosk.sh
+ExecStart=/bin/bash /home/opses/Labtv/kiosk.sh
 Restart=on-abort
 User=opses
 Group=opses
