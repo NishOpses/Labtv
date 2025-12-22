@@ -1,3 +1,39 @@
+import platform
+# =====================
+# MAC Address-based Colleague Presence Detection
+COLLEAGUES_FILE = os.path.join(os.path.dirname(__file__), "colleagues.json")
+def load_colleagues():
+    try:
+        with open(COLLEAGUES_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+    except Exception as e:
+        print(f"[DEBUG] Error loading colleagues: {e}")
+    return {}
+
+def get_arp_table():
+    try:
+        if platform.system().lower() == "windows":
+            output = subprocess.check_output(["arp", "-a"], encoding="utf-8")
+        else:
+            output = subprocess.check_output(["arp", "-a"], encoding="utf-8")
+        return output
+    except Exception as e:
+        print(f"[DEBUG] Error running arp -a: {e}")
+        return ""
+
+def get_present_absent_colleagues():
+    colleagues = load_colleagues()
+    arp_table = get_arp_table()
+    present = []
+    absent = []
+    for name, mac in colleagues.items():
+        if mac.lower() in arp_table.lower():
+            present.append(name)
+        else:
+            absent.append(name)
+    return present, absent
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
@@ -123,6 +159,25 @@ def background_update_loop():
 # HTML Template
 # =====================
 TEMPLATE = """
+    <div class="presence-events" style="margin-top:4vh;background:rgba(0,0,0,0.13);border-radius:18px;box-shadow:0 2px 12px #0002;padding:2vh 4vw;width:80vw;max-width:900px;">
+        <h2>Colleagues Present in Lab</h2>
+        {% if present_colleagues and present_colleagues|length > 0 %}
+            <ul style="list-style:none;padding:0;margin:0;">
+            {% for name in present_colleagues %}
+                <li style="margin-bottom:2vh;font-size:4vw;color:#2ecc40;font-weight:bold;line-height:1.4;text-shadow:0 2px 8px #0006;">{{ name }} (Present)</li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <div class="no-events" style="color:#aaa;font-size:3vw;">No colleagues detected</div>
+        {% endif %}
+        {% if absent_colleagues and absent_colleagues|length > 0 %}
+            <ul style="list-style:none;padding:0;margin:0;">
+            {% for name in absent_colleagues %}
+                <li style="margin-bottom:2vh;font-size:4vw;color:#e74c3c;font-weight:bold;line-height:1.4;text-shadow:0 2px 8px #0006;">{{ name }} (Absent)</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    </div>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -517,6 +572,7 @@ def get_system_status():
 @app.route("/")
 def public_info():
     weather = get_weather()
+    present_colleagues, absent_colleagues = get_present_absent_colleagues()
     return render_template_string(
         TEMPLATE,
         date=get_time_info()["date"],
@@ -524,6 +580,8 @@ def public_info():
         sys_status=get_system_status(),
         ssid=WIFI_SSID,
         calendar_events=get_calendar_events(),
+        present_colleagues=present_colleagues,
+        absent_colleagues=absent_colleagues,
         weather_class=weather["weather_class"] if weather else "default"
     )
 
