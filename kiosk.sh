@@ -59,7 +59,7 @@ launch_chromium() {
         --disable-popup-blocking \
         --start-maximized \
         --kiosk \
-        "http://localhost:5000" \
+        "http://localhost:8081" \
         "https://opses-verto.glide.page/dl/dash" \
         "https://opses-verto.glide.page/dl/orders" \
         "https://opses-company.monday.com/boards/1790536551" \
