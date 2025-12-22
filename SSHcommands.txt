@@ -1,0 +1,36 @@
+TO EDIT KIOSK FILE
+
+nano ~/kiosk.sh (edit kiosk file)
+
+sudo systemctl enable kiosk.service //enable kiosk service
+
+sudo systemctl disable kiosk.service // disable kiosk service
+
+sudo systemctl status kiosk.service // kiosk service status
+
+sudo systemctl start kiosk.service  // start kiosk service
+
+sudo systemctl stop kiosk.service  // stop kiosk service
+
+
+
+TO ENABLE PORTS AGAIN
+$ sudo nano /etc/rc.local  // (open this)(this file will run at the end of every boot up)
+
+$ echo '1-1' | sudo tee /sys/bus/usb/drivers/usb/bind (enable all GPIO back)
+
+
+$ sudo ifconfig eth0 up (enable eth)
+
+
+
+
+
+LINKS
+https://pimylifeup.com/raspberry-pi-kiosk/
+https://www.raspberrypi.com/tutorials/how-to-use-a-raspberry-pi-in-kiosk-mode/
+https://github.com/pucherot/Pi.Alert/tree/main
+
+
+ssh opses@raspberrypi
+Opses
