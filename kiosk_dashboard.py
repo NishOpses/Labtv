@@ -281,20 +281,21 @@ window.onload = updateClock;
         {% endif %}
     </div>
 
-    <div class="calendar-events">
-        <h2 style="font-size:2vw;margin:2vh 0 1vh 0;color:#fff;">Upcoming Events</h2>
+
+    <div class="calendar-events" style="margin-top:3vh;">
+        <h2 style="font-size:3vw;margin:2vh 0 1vh 0;color:#fff;letter-spacing:0.05em;">Upcoming Events</h2>
         {% if calendar_events and calendar_events|length > 0 %}
             <ul style="list-style:none;padding:0;margin:0;">
             {% for event in calendar_events %}
-                <li style="margin-bottom:1vh;font-size:1.5vw;color:#fff;">
-                    <span style="color:#2ecc40;font-weight:bold;">{{ event.start[5:16] }}</span>
-                    &mdash; {{ event.summary }}
-                    {% if event.location %}<span style="color:#aaa;">@ {{ event.location }}</span>{% endif %}
+                <li style="margin-bottom:2vh;font-size:2.5vw;color:#fff;font-weight:bold;line-height:1.3;">
+                    <span style="color:#2ecc40;font-weight:900;font-size:2.7vw;">{{ event.start[5:16] }}</span>
+                    &mdash; <span style="font-size:2.5vw;">{{ event.summary }}</span>
+                    {% if event.location %}<span style="color:#aaa;font-size:2vw;"> @ {{ event.location }}</span>{% endif %}
                 </li>
             {% endfor %}
             </ul>
         {% else %}
-            <div style="color:#aaa;font-size:1.2vw;">No upcoming events</div>
+            <div style="color:#aaa;font-size:2vw;">No upcoming events</div>
         {% endif %}
     </div>
 
