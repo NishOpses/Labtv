@@ -1,11 +1,12 @@
-from flask import Flask, render_template_string, redirect, url_for
-import subprocess
+
+from flask import Flask, render_template_string
 import os
-import time
-from useful_info import get_time_info, get_hostname, get_os_info
+import requests
+import json
+from datetime import datetime, timedelta
+from useful_info import get_time_info
 
 app = Flask(__name__)
-
 
 TEMPLATE = """
 <!DOCTYPE html>
@@ -46,14 +47,6 @@ TEMPLATE = """
             display: block;
             box-shadow: 0 2px 16px #0006;
         }
-        .company-name {
-            font-size: 3vw;
-            color: #2ecc40;
-            font-weight: bold;
-            margin-bottom: 2vh;
-            letter-spacing: 0.1em;
-            text-shadow: 0 2px 12px #000a;
-        }
         .public-clock {
             font-size: 10vw;
             font-weight: bold;
@@ -72,12 +65,40 @@ TEMPLATE = """
             margin-bottom: 1vh;
             font-weight: 500;
         }
+        .weather {
+            margin-top: 2vh;
+            color: #fff;
+            font-size: 2vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .weather-row {
+            display: flex;
+            align-items: center;
+            gap: 1vw;
+        }
+        .weather-icon {
+            width: 4vw;
+            min-width: 48px;
+            max-width: 80px;
+        }
+        .weather-temp {
+            font-size: 3vw;
+            font-weight: 600;
+            color: #2ecc40;
+        }
+        .weather-desc {
+            font-size: 1.5vw;
+            color: #eee;
+            margin-top: 0.5vh;
+            text-align: center;
+        }
         @media (orientation: portrait) {
             .public-container {
                 padding-top: 8vh;
             }
             .company-logo { width: 30vw; max-width: 320px; min-width: 140px; }
-            .company-name { font-size: 4vw; }
             .public-clock { font-size: 13vw; }
             .public-date { font-size: 5vw; }
         }
@@ -98,10 +119,71 @@ TEMPLATE = """
         <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">
         <div class=\"public-clock\" id=\"publicclock\"></div>
         <div class=\"public-date\">{{ date }}</div>
+        <div class=\"weather\">
+            {% if weather %}
+            <div class=\"weather-row\">
+                <img class=\"weather-icon\" src=\"{{ weather['icon_url'] }}\" alt=\"Weather\">
+                <span class=\"weather-temp\">{{ weather['temp'] }}°C</span>
+            </div>
+            <div class=\"weather-desc\">{{ weather['desc'] }}</div>
+            {% else %}
+            <div class=\"weather-desc\">Weather unavailable</div>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>
 """
+
+# Weather caching logic
+WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
+WEATHER_API_KEY = "144536c74a836feb69c1cd449b8457b9"
+WEATHER_LAT = 51.0902
+WEATHER_LON = -1.1662
+WEATHER_CACHE_MINUTES = 15  # 96 calls/day max
+
+def get_weather():
+    now = datetime.utcnow()
+    # Try cache
+    if os.path.exists(WEATHER_CACHE_FILE):
+        try:
+            with open(WEATHER_CACHE_FILE, "r") as f:
+                data = json.load(f)
+            ts = datetime.fromisoformat(data.get("timestamp"))
+            if (now - ts) < timedelta(minutes=WEATHER_CACHE_MINUTES):
+                return data["weather"]
+        except Exception:
+            pass
+    # Fetch from API
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={WEATHER_LAT}&lon={WEATHER_LON}&appid={WEATHER_API_KEY}&units=metric"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            w = resp.json()
+            weather = {
+                "temp": int(round(w["main"]["temp"])),
+                "desc": w["weather"][0]["description"].title(),
+                "icon_url": f"https://openweathermap.org/img/wn/{w['weather'][0]['icon']}@4x.png"
+            }
+            with open(WEATHER_CACHE_FILE, "w") as f:
+                json.dump({"timestamp": now.isoformat(), "weather": weather}, f)
+            return weather
+    except Exception:
+        pass
+    return None
+
+@app.route("/")
+def public_info():
+    time_info = get_time_info()
+    weather = get_weather()
+    return render_template_string(
+        TEMPLATE,
+        date=time_info['date'],
+        weather=weather
+    )
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8081, debug=True)
 
 def get_chromium_status():
     try:
