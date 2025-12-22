@@ -3,6 +3,7 @@ from flask import Flask, render_template_string, send_file
 import io
 import qrcode
 import os
+import psutil
 import threading
 import time
 import subprocess
@@ -164,9 +165,43 @@ TEMPLATE = """
     setInterval(updateClock, 1000);
     window.onload = updateClock;
     </script>
+    <style>
+        .system-status {
+            position: fixed;
+            right: 2vw;
+            bottom: 2vh;
+            background: rgba(30, 34, 40, 0.92);
+            color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px #0004;
+            padding: 1.2vw 2vw;
+            font-size: 1.2vw;
+            min-width: 180px;
+            z-index: 100;
+            text-align: left;
+            opacity: 0.95;
+        }
+        .system-status strong {
+            color: #2ecc40;
+        }
+    </style>
+    function updateClock() {
+        var now = new Date();
+        var time = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+        var pubclock = document.getElementById('publicclock');
+        if (pubclock) pubclock.textContent = time;
+    }
+    setInterval(updateClock, 1000);
+    window.onload = updateClock;
+    </script>
 </head>
 <body>
     <div class=\"public-container\">\n        <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">\n        <div class=\"public-clock\" id=\"publicclock\"></div>\n        <div class=\"public-date\">{{ date }}</div>\n        <div class=\"weather\">\n            {% if weather %}\n            <div class=\"weather-row\">\n                <img class=\"weather-icon\" src=\"{{ weather['icon_url'] }}\" alt=\"Weather\">\n                <span class=\"weather-temp\">{{ weather['temp'] }}°C</span>\n            </div>\n            <div class=\"weather-desc\">{{ weather['desc'] }}</div>\n            {% else %}\n            <div class=\"weather-desc\">Weather unavailable</div>\n            {% endif %}\n        </div>\n        <div class=\"wifi-qr\">\n            <div class=\"wifi-qr-label\">WiFi QR ({{ ssid }})</div>\n            <img src=\"/wifi_qr\" alt=\"WiFi QR Code\">\n            <div class=\"wifi-qr-label\">Scan to connect</div>\n        </div>\n    </div>\n</body>\n</html>\n"""
+        <div class=\"system-status\">
+            <div><strong>CPU:</strong> {{ sys_status['cpu'] }}%</div>
+            <div><strong>RAM:</strong> {{ sys_status['mem'] }}%</div>
+            <div><strong>Disk:</strong> {{ sys_status['disk'] }}%</div>
+        </div>\n    </div>\n</body>\n</html>\n"""
 @app.route("/wifi_qr")
 def wifi_qr():
     # WiFi QR code format: WIFI:T:WPA;S:mynetwork;P:mypass;;
@@ -213,6 +248,12 @@ def get_weather():
     except Exception:
         pass
     return None
+def get_system_status():
+    return {
+        "cpu": psutil.cpu_percent(interval=0.5),
+        "mem": psutil.virtual_memory().percent,
+        "disk": psutil.disk_usage("/").percent
+    }
 
 @app.route("/")
 def public_info():
@@ -220,6 +261,7 @@ def public_info():
     weather = get_weather()
     return render_template_string(
         TEMPLATE,
+        sys_status=sys_status,
         date=time_info['date'],
         weather=weather,
         ssid=WIFI_SSID
