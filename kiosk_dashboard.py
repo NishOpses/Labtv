@@ -29,16 +29,17 @@ TEMPLATE = """
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             background: linear-gradient(180deg, #181c20 60%, #23272b 100%);
             text-align: center;
+            padding-top: 8vh;
         }
         .company-logo {
-            width: 22vw;
-            max-width: 240px;
-            min-width: 120px;
-            min-height: 60px;
-            margin-bottom: 2vh;
+            width: 32vw;
+            max-width: 340px;
+            min-width: 160px;
+            min-height: 80px;
+            margin-bottom: 3vh;
             background: #fff;
             border-radius: 16px;
             object-fit: contain;
@@ -95,7 +96,6 @@ TEMPLATE = """
 <body>
     <div class=\"public-container\">
         <img class=\"company-logo\" src=\"/static/Opses_Logo.jpg\" alt=\"OPSES Logo\" onerror=\"this.style.background='#222';this.src='';this.alt='OPSES';\">
-        <div class=\"company-name\">OPSES</div>
         <div class=\"public-clock\" id=\"publicclock\"></div>
         <div class=\"public-date\">{{ date }}</div>
     </div>
