@@ -774,7 +774,7 @@ TEMPLATE = """<!DOCTYPE html>
             
             <!-- Calendar panel -->
             <div class="panel">
-                <div class="panel-title">Upcoming Events</div>
+                <div class="panel-title">Events</div>
                 <div class="calendar-content">
                     {% if calendar_events and calendar_events|length > 0 %}
                     <ul class="calendar-events-list">
