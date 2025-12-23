@@ -26,15 +26,26 @@ fi
 # Set display environment variable for X applications
 export DISPLAY=:0
 
-xset s noblank
-xset s off
-xset -dpms
+# Suppress X server errors
+xset s noblank 2>/dev/null
+xset s off 2>/dev/null
+xset -dpms 2>/dev/null || true
 
 xdotool mousemove 1080 1920
 unclutter -idle 0.5 -root &
 
-sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' /home/$USER/.config/chromium/Default/Preferences
-sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' /home/$USER/.config/chromium/fault/Preferences
+# Ensure Chromium directories exist
+mkdir -p /home/$USER/.config/chromium/Default
+mkdir -p /home/$USER/.config/chromium/fault
+
+sed -i 's/"exited_cleanly":false/"exited_cleanly":true/' /home/$USER/.config/chromium/Default/Preferences 2>/dev/null
+
+# Create fault Preferences if it doesn't exist
+if [ ! -f /home/$USER/.config/chromium/fault/Preferences ]; then
+    echo '{"exit_type":"Normal","exited_cleanly":true}' > /home/$USER/.config/chromium/fault/Preferences
+else
+    sed -i 's/"exit_type":"Crashed"/"exit_type":"Normal"/' /home/$USER/.config/chromium/fault/Preferences 2>/dev/null
+fi
 
 # Function to launch Flask dashboard in background
 launch_dashboard() {
@@ -58,6 +69,7 @@ launch_dashboard() {
         sleep 1
     done
     echo "ERROR: Dashboard failed to start"
+    tail -20 "$SCRIPT_DIR/dashboard.log"
     return 1
 }
 
@@ -70,6 +82,7 @@ launch_chromium() {
     pkill -f chromium 2>/dev/null
     sleep 2
     
+    echo "Starting Chromium with IP: $PI_IP"
     /usr/bin/chromium-browser --noerrdialogs \
         --disable-infobars \
         --disable-session-crashed-bubble \
@@ -85,8 +98,40 @@ launch_chromium() {
     echo "Chromium launched with PID $CHROMIUM_PID"
 }
 
-# Function to get presence info for notifications
+# Function to get presence info for notifications (SIMPLE VERSION)
 get_presence_info() {
+    if command -v python3 &> /dev/null && [ -f "$SCRIPT_DIR/colleagues.json" ]; then
+        PRESENCE_INFO=$(cd "$SCRIPT_DIR" && python3 -c "
+import json
+import subprocess
+try:
+    # Simple ARP check
+    result = subprocess.run(['arp', '-a'], capture_output=True, text=True, timeout=5)
+    arp_output = result.stdout.lower()
+    
+    with open('colleagues.json') as f:
+        colleagues = json.load(f)
+    
+    present = []
+    for name, mac in colleagues.items():
+        if mac and mac.lower() in arp_output:
+            present.append(name)
+    
+    if present:
+        print('Present: {}'.format(', '.join(present)))
+    else:
+        print('No colleagues detected')
+except Exception as e:
+    print('Presence check failed: {}'.format(str(e)[:50]))
+" 2>/dev/null)
+        echo "$PRESENCE_INFO"
+    else
+        echo "Presence check not available"
+    fi
+}
+
+# Function to get presence info using network scanner (ADVANCED VERSION)
+get_presence_info_advanced() {
     if command -v python3 &> /dev/null && [ -f "$SCRIPT_DIR/network_scanner.py" ]; then
         PRESENCE_INFO=$(cd "$SCRIPT_DIR" && python3 -c "
 import sys
@@ -96,33 +141,52 @@ try:
     scanner = NetworkScanner()
     present, absent = scanner.detect_presence()
     if present:
-        print(f'✅ {len(present)} colleague(s) present: {", ".join(present)}')
+        print('Advanced Scan: {} present: {}'.format(len(present), ', '.join(present)))
     else:
-        print('📭 No colleagues detected in office')
+        print('Advanced Scan: No colleagues detected')
 except Exception as e:
-    print(f'⚠️ Scanner error: {str(e)[:50]}')
+    print('Advanced scan failed: {}'.format(str(e)[:50]))
 " 2>/dev/null)
         echo "$PRESENCE_INFO"
     else
-        echo "❌ Scanner not available"
+        echo "Advanced scanner not available"
     fi
 }
 
 # Initial launch
+echo "Step 1: Launching dashboard..."
 launch_dashboard
+if [ $? -ne 0 ]; then
+    echo "ERROR: Dashboard failed to start. Check dashboard.log"
+    exit 1
+fi
+
 sleep 5  # Give dashboard a moment to start
+
+echo "Step 2: Launching Chromium..."
 launch_chromium
 
 # Wait for Chromium to start
 sleep 30
 
-# Send notification to Teams with presence info
+echo "Step 3: Getting presence information..."
 PRESENCE_INFO=$(get_presence_info)
-send_teams_notification "🚀 Kiosk started on $(hostname) at $(date +'%H:%M %d/%m/%Y')
-$PRESENCE_INFO
-📊 Dashboard: http://$(hostname -I | awk '{print $1}'):8081"
+ADVANCED_INFO=$(get_presence_info_advanced)
 
-# Refresh all open tabs
+echo "Simple presence: $PRESENCE_INFO"
+echo "Advanced presence: $ADVANCED_INFO"
+
+# Send notification to Teams when script is fully initialized
+FULL_MESSAGE="🚀 Kiosk started on $(hostname) at $(date +'%H:%M %d/%m/%Y')
+IP: $(hostname -I | awk '{print $1}')
+Dashboard: http://$(hostname -I | awk '{print $1}'):8081
+Presence: $PRESENCE_INFO
+$ADVANCED_INFO"
+
+echo "Sending Teams notification..."
+send_teams_notification "$FULL_MESSAGE"
+
+echo "Step 4: Initial tab refresh..."
 sleep 10
 xdotool keydown ctrl+shift+r; xdotool keyup ctrl+shift+r;
 
@@ -147,6 +211,9 @@ last_launch_time=$(date +%s)
 last_presence_notification=""
 presence_check_interval=300  # Check presence every 5 minutes
 last_presence_check=$(date +%s)
+
+echo "Step 5: Entering main loop..."
+echo "Kiosk is now running. Press Ctrl+C to stop."
 
 while true; do
     # Health check: Restart Chromium if not running
