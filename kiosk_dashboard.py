@@ -186,41 +186,41 @@ body {
     margin: 0;
     width: 100vw;
     height: 100vh;
-    background: #181c20;
-    color: #fff;
-}
-.public-container {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding-top: 7vh;
-    padding-bottom: 3vh;
-    width: 100vw;
+        margin-top: 1vh;
+        color: #fff;
+        font-size: 2vw;
+        font-weight: bold;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: rgba(0,0,0,0.10);
+        border-radius: 12px;
+        padding: 1vh 2vw;
+        box-shadow: 0 2px 12px #0002;
     box-sizing: border-box;
 }
-.company-logo {
-    width: 30vw;
-    max-width: 340px;
+        display: flex;
+        align-items: center;
+        gap: 1vw;
     background: #fff;
     border-radius: 18px;
-    margin-bottom: 2vh;
-    box-shadow: 0 4px 24px #0003;
-}
-.public-clock {
+        width: 7vw;
+        min-width: 60px;
+        max-width: 110px;
+        transition: transform 0.4s;
     font-size: 11vw;
     color: #fff;
-    font-weight: bold;
-    letter-spacing: 0.08em;
-    text-shadow: 0 4px 24px #000a;
-    margin-bottom: 1vh;
-    display: flex;
+        font-size: 4vw;
+        color: #2ecc40;
+        font-weight: 900;
+        margin-left: 1vw;
+        text-shadow: 0 2px 12px #0006;
     gap: 0.5vw;
     justify-content: center;
-    align-items: center;
-    perspective: 200px;
-}
-.flip {
+        font-size: 1.5vw;
+        margin-top: 0.5vh;
+        color: #eee;
+        text-shadow: 0 1px 4px #0005;
     /* flip animation removed */
 }
 @keyframes flip {
