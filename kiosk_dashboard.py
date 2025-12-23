@@ -217,6 +217,7 @@ def get_calendar_events():
                     ) and event_start <= now + timedelta(days=7):
                         events.append({
                             "start": event_start.strftime('%Y-%m-%d %H:%M'),
+                            "end": event_end.strftime('%Y-%m-%d %H:%M') if event_end else None,
                             "summary": e.name or "(No Title)",
                             "location": getattr(e, 'location', None) or ""
                         })
@@ -821,7 +822,13 @@ TEMPLATE = """<!DOCTYPE html>
                     <ul class="calendar-events-list">
                         {% for event in calendar_events %}
                         <li>
-                            <span class="event-date">{{ event.start[5:16] if event.start|length > 16 else event.start }}</span>
+                            <span class="event-date">
+                                {% if event.end %}
+                                    {{ event.start[5:16] if event.start|length > 16 else event.start }} - {{ event.end[11:16] if event.end|length > 16 else event.end }}
+                                {% else %}
+                                    {{ event.start[5:16] if event.start|length > 16 else event.start }}
+                                {% endif %}
+                            </span>
                             <span class="event-summary">{{ event.summary }}</span>
                             {% if event.location and event.location|length > 0 %}
                             <span class="event-location">{{ event.location }}</span>
