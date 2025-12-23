@@ -799,7 +799,7 @@ TEMPLATE = """<!DOCTYPE html>
     <div class="system-info-bar">
         <!-- System status removed as requested -->
 
-        <div class="presence-ticker-bar" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.85); z-index: 200; overflow: hidden; white-space: nowrap;">
+        <div class="presence-ticker-bar" style="position: fixed; left: 0; top: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.85); z-index: 200; overflow: hidden; white-space: nowrap;">
             <div id="presence-ticker-wrapper" style="display: flex; width: max-content;">
                 <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; padding: 0.5vw 0;">
                     <span style="color: #2ecc40; font-weight: 700;">Present:</span>
