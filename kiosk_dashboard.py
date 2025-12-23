@@ -799,8 +799,8 @@ TEMPLATE = """<!DOCTYPE html>
     <div class="system-info-bar">
         <!-- System status removed as requested -->
 
-        <div class="presence-ticker-bar" style="flex: 2; overflow: hidden; white-space: nowrap; position: relative; height: 2.5vw;">
-            <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; position: absolute; left: 100%; will-change: transform;">
+        <div class="presence-ticker-bar" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.85); z-index: 200; overflow: hidden; white-space: nowrap;">
+            <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; position: absolute; left: 100vw; will-change: transform;">
                 <span style="color: #2ecc40; font-weight: 700;">Present:</span>
                 {% if present_colleagues and present_colleagues|length > 0 %}
                     {% for person in present_colleagues %}
@@ -822,17 +822,15 @@ TEMPLATE = """<!DOCTYPE html>
 
     <style>
     @keyframes ticker-scroll {
-        0% { transform: translateX(100%); }
+        0% { transform: translateX(100vw); }
         100% { transform: translateX(-100%); }
     }
     </style>
     <script>
-    // Animate the presence ticker for smooth continuous scrolling
+    // Animate the presence ticker for smooth continuous scrolling across the full screen
     window.addEventListener('DOMContentLoaded', function() {
         var ticker = document.getElementById('presence-ticker');
         if (ticker) {
-            var parent = ticker.parentElement;
-            var parentWidth = parent.offsetWidth;
             var tickerWidth = ticker.offsetWidth;
             var duration = Math.max(15, tickerWidth / 60); // seconds, adjust speed
             ticker.style.animation = 'ticker-scroll ' + duration + 's linear infinite';
