@@ -166,184 +166,200 @@ TEMPLATE = """
             <span style="color:#2ecc40;font-weight:bold;">Present: </span>
             <span style="color:#fff;">{{ present_colleagues|join(', ') }}</span>
         {% else %}
-            <span style="color:#aaa;">No colleagues detected</span>
-        {% endif %}
-        {% if absent_colleagues and absent_colleagues|length > 0 %}
-            <br><span style="color:#e74c3c;font-weight:bold;">Absent: </span>
-            <span style="color:#fff;">{{ absent_colleagues|join(', ') }}</span>
-        {% endif %}
+                font-family: 'Segoe UI', Arial, sans-serif;
+                margin: 0;
+                width: 100vw;
+                height: 100vh;
+                background: #101217;
+                color: #fff;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
     </div>
 <!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Kiosk Public Info</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-<style>
-body {
+                min-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2vh;
+                width: 100vw;
+                box-sizing: border-box;
     font-family: 'Segoe UI', Arial, sans-serif;
     margin: 0;
-    width: 100vw;
-    height: 100vh;
-        margin-top: 2vh;
-        color: #fff;
-        font-size: 4vw;
-        font-weight: bold;
+                width: 18vw;
+                max-width: 180px;
+                background: #fff;
+                border-radius: 16px;
+                margin-bottom: 2vh;
+                box-shadow: 0 4px 24px #0003;
+                display: block;
+                margin-left: auto;
+                margin-right: auto;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        background: rgba(0,0,0,0.10);
-        border-radius: 18px;
-        padding: 2vh 4vw;
-        box-shadow: 0 2px 12px #0002;
-    box-sizing: border-box;
-}
-        display: flex;
-        align-items: center;
-        gap: 3vw;
-    background: #fff;
+                font-size: 8vw;
+                color: #fff;
+                font-weight: bold;
+                letter-spacing: 0.08em;
+                text-shadow: 0 4px 24px #000a;
+                margin-bottom: 1vh;
+                display: flex;
+                gap: 1vw;
+                justify-content: center;
+                align-items: center;
+                perspective: 200px;
     border-radius: 18px;
         width: 13vw;
-        min-width: 120px;
-        max-width: 220px;
-        transition: transform 0.4s;
-    font-size: 11vw;
-    color: #fff;
+                font-size: 2vw;
+                color: #fff;
+                font-weight: 500;
+                margin-bottom: 2vh;
+                text-shadow: 0 2px 8px #0006;
+                text-align: center;
         font-size: 8vw;
         color: #2ecc40;
-        font-weight: 900;
-        margin-left: 2vw;
-        text-shadow: 0 2px 12px #0006;
-               font-size: 11vw;
-               color: #fff;
-               font-weight: bold;
-               letter-spacing: 0.08em;
-               text-shadow: 0 4px 24px #000a;
-               margin-bottom: 1vh;
-               display: flex;
-               gap: 0.5vw;
+                margin-top: 2vh;
+                color: #fff;
+                font-size: 1.2vw;
+                font-weight: 500;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                background: #181c20;
+                border-radius: 14px;
+                padding: 1vh 2vw;
+                box-shadow: 0 2px 12px #0002;
+                min-width: 220px;
+                max-width: 320px;
                justify-content: center;
                align-items: center;
-               perspective: 200px;
-    100% { transform: rotateX(0deg); }
-}
+                display: flex;
+                align-items: center;
+                gap: 1vw;
 .public-date {
     font-size: 6vw;
-    color: #fff;
-    font-weight: bold;
-    margin-bottom: 2vh;
-    text-shadow: 0 2px 8px #0006;
+                width: 6vw;
+                min-width: 60px;
+                max-width: 90px;
+                transition: transform 0.4s;
 }
 .weather {
-    margin-top: 2vh;
-    color: #fff;
-    font-size: 4vw;
-    font-weight: bold;
-    display: flex;
+                font-size: 2vw;
+                color: #2ecc40;
+                font-weight: 700;
+                margin-left: 1vw;
+                text-shadow: 0 2px 12px #0006;
     flex-direction: column;
     align-items: center;
-    background: rgba(0,0,0,0.10);
-    border-radius: 18px;
-    padding: 2vh 4vw;
-    box-shadow: 0 2px 12px #0002;
+                font-size: 1vw;
+                margin-top: 0.5vh;
+                color: #eee;
+                text-shadow: 0 1px 4px #0005;
+                text-align: center;
 }
 .weather-row {
-    display: flex;
-    align-items: center;
-    gap: 3vw;
-}
-.weather-icon {
-    width: 13vw;
-    min-width: 120px;
+                margin-top: 3vh;
+                background: #181c20;
+                border-radius: 14px;
+                box-shadow: 0 2px 12px #0002;
+                padding: 1vh 2vw;
+                min-width: 220px;
+                max-width: 320px;
+                width: auto;
+                text-align: left;
     max-width: 220px;
     transition: transform 0.4s;
-}
-/* Weather icon animations */
-.weather-icon.sunny {
-    animation: pulse 2s infinite;
-}
+                font-size: 1.5vw;
+                margin: 1vh 0 1vh 0;
+                color: #fff;
+                letter-spacing: 0.07em;
+                text-shadow: 0 2px 8px #0006;
+                text-align: center;
 .weather-icon.rainy, .weather-icon.snowy {
     animation: bounce 1.5s infinite;
-}
-.weather-icon.windy {
-    animation: rotate 3s linear infinite;
+                list-style: none;
+                padding: 0;
+                margin: 0;
 }
 @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.12); }
-}
-@keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+                margin-bottom: 1vh;
+                font-size: 1vw;
+                color: #fff;
+                font-weight: 500;
+                line-height: 1.4;
+                text-shadow: 0 2px 8px #0006;
 }
 @keyframes rotate {
-    0% { transform: rotate(0deg); }
+                font-size: 1vw;
     100% { transform: rotate(360deg); }
 }
-.weather-temp {
-    font-size: 8vw;
-    color: #2ecc40;
+                color: #2ecc40;
+                font-weight: 700;
+                font-size: 1vw;
     font-weight: 900;
     margin-left: 2vw;
-    text-shadow: 0 2px 12px #0006;
-}
+                color: #aaa;
+                font-size: 0.9vw;
 .weather-desc {
     font-size: 3vw;
-    margin-top: 1vh;
-    color: #eee;
+                color: #aaa;
+                font-size: 1vw;
+                text-align: center;
     text-shadow: 0 1px 4px #0005;
 }
-.calendar-events {
-    margin-top: 4vh;
-    background: rgba(0,0,0,0.13);
-    border-radius: 18px;
-    box-shadow: 0 2px 12px #0002;
-    padding: 2vh 4vw;
-    width: 80vw;
-    max-width: 900px;
-}
-.calendar-events h2 {
-    font-size: 4vw;
-    margin: 2vh 0 2vh 0;
+                position: fixed;
+                left: 2vw;
+                bottom: 2vh;
+                margin: 0;
+                z-index: 200;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                background: #181c20;
+                padding: 1vw 1.5vw;
+                border-radius: 12px;
+                box-shadow: 0 4px 24px #0002;
     color: #fff;
     letter-spacing: 0.07em;
-    text-shadow: 0 2px 8px #0006;
-}
-.calendar-events ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
+                width: 7vw;
+                min-width: 60px;
+                max-width: 90px;
+                background: #fff;
+                border-radius: 8px;
+                margin-top: 0.5vh;
+                box-shadow: 0 2px 8px #0001;
 .calendar-events li {
     margin-bottom: 3vh;
-    font-size: 4vw;
-    color: #fff;
-    font-weight: bold;
-    line-height: 1.4;
+                color: #fff;
+                font-size: 0.9vw;
+                margin-bottom: 0.5vh;
+                font-weight: 500;
     text-shadow: 0 2px 8px #0006;
 }
-.calendar-events li span {
-    font-size: 4.2vw;
-}
-.calendar-events li .event-date {
-    color: #2ecc40;
-    font-weight: 900;
-    font-size: 4.2vw;
-}
-.calendar-events li .event-location {
-    color: #aaa;
+                position: fixed;
+                right: 2vw;
+                bottom: 2vh;
+                background: #181c20;
+                color: #fff;
+                border-radius: 12px;
+                padding: 1vw 1.5vw;
+                font-size: 0.9vw;
+                box-shadow: 0 4px 24px #0002;
+                font-weight: 500;
     font-size: 3vw;
 }
 .calendar-events .no-events {
     color: #aaa;
     font-size: 3vw;
-}
-/* Modernized system status and wifi QR backgrounds */
-.wifi-qr {
-    position: fixed;
-    left: 2vw;
-    bottom: 2vh;
+                .public-date, .public-clock, .weather, .calendar-events h2, .calendar-events li {
+                    font-size: 4vw !important;
+                }
+                .calendar-events li span, .calendar-events li .event-date {
+                    font-size: 4vw !important;
+                }
     margin: 0;
     z-index: 200;
     display: flex;
