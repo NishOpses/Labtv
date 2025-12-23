@@ -797,20 +797,48 @@ TEMPLATE = """<!DOCTYPE html>
     
     <!-- System info bar at bottom -->
     <div class="system-info-bar">
-        <div class="system-stats-fixed" style="position: fixed; bottom: 0.5vh; left: 1vw; font-size: 0.6vw; color: #b0b7c3; background: rgba(24,28,32,0.7); padding: 0.2vw 0.6vw; border-radius: 8px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); line-height: 1.2;">
-            <span class="stat-label">CPU:</span>
-            <span class="stat-value cpu-value">{{ sys_status.cpu }}%</span>
-            <span class="stat-label" style="margin-left:0.7vw;">RAM:</span>
-            <span class="stat-value mem-value">{{ sys_status.mem }}%</span>
-            <span class="stat-label" style="margin-left:0.7vw;">Disk:</span>
-            <span class="stat-value disk-value">{{ sys_status.disk }}%</span>
+        <!-- System status removed as requested -->
+
+        <div class="presence-ticker-bar" style="flex: 2; overflow: hidden; white-space: nowrap; position: relative; height: 2.5vw;">
+            <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; position: absolute; left: 100%; will-change: transform;">
+                <span style="color: #2ecc40; font-weight: 700;">Present:</span>
+                {% if present_colleagues and present_colleagues|length > 0 %}
+                    {% for person in present_colleagues %}
+                        <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span style="color: #888;">No one present</span>
+                {% endif %}
+                <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
+                {% if absent_colleagues and absent_colleagues|length > 0 %}
+                    {% for person in absent_colleagues %}
+                        <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span style="color: #888;">None</span>
+                {% endif %}
+            </div>
         </div>
 
-        <div class="presence-summary-bar" style="display: flex; align-items: center; gap: 2vw; margin-left: 2vw; margin-right: 2vw;">
-            <span style="color: #2ecc40; font-weight: 700; font-size: 2vw;">Office:</span>
-            <span style="color: #2ecc40; font-size: 2vw;">Present: {{ present_colleagues|length }}</span>
-            <span style="color: #b0b7c3; font-size: 2vw;">Absent: {{ absent_colleagues|length }}</span>
-        </div>
+    <style>
+    @keyframes ticker-scroll {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+    </style>
+    <script>
+    // Animate the presence ticker for smooth continuous scrolling
+    window.addEventListener('DOMContentLoaded', function() {
+        var ticker = document.getElementById('presence-ticker');
+        if (ticker) {
+            var parent = ticker.parentElement;
+            var parentWidth = parent.offsetWidth;
+            var tickerWidth = ticker.offsetWidth;
+            var duration = Math.max(15, tickerWidth / 60); // seconds, adjust speed
+            ticker.style.animation = 'ticker-scroll ' + duration + 's linear infinite';
+        }
+    });
+    </script>
 
         <div class="wifi-section">
             <div class="wifi-info">
