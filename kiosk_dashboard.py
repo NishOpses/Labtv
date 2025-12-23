@@ -1,3 +1,43 @@
+# Weather caching logic
+WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
+WEATHER_API_KEY = "144536c74a836feb69c1cd449b8457b9"
+WEATHER_LAT = 51.0902
+WEATHER_LON = -1.1662
+WEATHER_CACHE_MINUTES = 15  # 96 calls/day max
+
+def get_weather():
+    now = datetime.utcnow()
+    # Try cache
+    if os.path.exists(WEATHER_CACHE_FILE):
+        try:
+            with open(WEATHER_CACHE_FILE, "r") as f:
+                data = json.load(f)
+            ts = datetime.fromisoformat(data.get("timestamp"))
+            if (now - ts) < timedelta(minutes=WEATHER_CACHE_MINUTES):
+                print("[DEBUG] Using cached weather data")
+                return data["weather"]
+        except Exception as e:
+            print(f"[DEBUG] Error reading weather cache: {e}")
+    # Fetch from API
+    try:
+        url = f"https://api.openweathermap.org/data/2.5/weather?lat={WEATHER_LAT}&lon={WEATHER_LON}&appid={WEATHER_API_KEY}&units=metric"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            w = resp.json()
+            weather = {
+                "temp": int(round(w["main"]["temp"])),
+                "desc": w["weather"][0]["description"].title(),
+                "icon_url": f"https://openweathermap.org/img/wn/{w['weather'][0]['icon']}@4x.png"
+            }
+            with open(WEATHER_CACHE_FILE, "w") as f:
+                json.dump({"timestamp": now.isoformat(), "weather": weather}, f)
+            print("[DEBUG] Weather fetched and cached")
+            return weather
+        else:
+            print(f"[DEBUG] Weather API failed with status {resp.status_code}")
+    except Exception as e:
+        print(f"[DEBUG] Exception fetching weather: {e}")
+    return None
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import os
@@ -134,16 +174,33 @@ def get_calendar_events():
                 events = []
                 for e in sorted(c.timeline, key=lambda ev: ev.begin):
                     # Ensure event datetime is offset-aware (UTC)
-                    event_dt = e.begin.datetime
-                    if event_dt.tzinfo is None:
-                        event_dt = event_dt.replace(tzinfo=utc)
+                    event_start = e.begin.datetime
+                    if event_start.tzinfo is None:
+                        event_start = event_start.replace(tzinfo=utc)
                     else:
-                        event_dt = event_dt.astimezone(utc)
-                    
-                    # Only show future events (today and next 7 days)
-                    if event_dt >= now and event_dt <= now + timedelta(days=7):
+                        event_start = event_start.astimezone(utc)
+
+                    # Handle event end (may be None for single-point events)
+                    event_end = getattr(e, 'end', None)
+                    if event_end:
+                        event_end = event_end.datetime
+                        if event_end.tzinfo is None:
+                            event_end = event_end.replace(tzinfo=utc)
+                        else:
+                            event_end = event_end.astimezone(utc)
+                    else:
+                        event_end = event_start
+
+                    # Show events that are:
+                    # - currently in progress (now between start and end)
+                    # - or upcoming (start >= now)
+                    # - and within the next 7 days
+                    if (
+                        (event_start <= now <= event_end) or
+                        (event_start >= now)
+                    ) and event_start <= now + timedelta(days=7):
                         events.append({
-                            "start": event_dt.strftime('%Y-%m-%d %H:%M'),
+                            "start": event_start.strftime('%Y-%m-%d %H:%M'),
                             "summary": e.name or "(No Title)",
                             "location": getattr(e, 'location', None) or ""
                         })
