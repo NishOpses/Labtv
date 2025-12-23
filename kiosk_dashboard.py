@@ -1,3 +1,19 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+import os
+import io
+import platform
+import qrcode
+import psutil
+import threading
+import time
+import subprocess
+import requests
+import json
+import traceback
+from datetime import datetime, timedelta
+from flask import Flask, render_template_string, send_file, request, jsonify, send_from_directory
+
 # Weather caching logic
 WEATHER_CACHE_FILE = os.path.join(os.path.dirname(__file__), "weather_cache.json")
 WEATHER_API_KEY = "144536c74a836feb69c1cd449b8457b9"
