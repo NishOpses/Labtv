@@ -740,7 +740,7 @@ TEMPLATE = """<!DOCTYPE html>
     </style>
 </head>
 <body>
-    <div class="main-container">
+    <div class="main-container" style="max-width: 900px; width: 95vw; min-width: 0; margin: 0 auto;">
         <!-- Header with logo -->
         <div class="header-section">
             <img class="company-logo" src="/static/Opses_Logo.jpg" alt="Opses Logo" onerror="this.style.display='none'">
@@ -755,9 +755,9 @@ TEMPLATE = """<!DOCTYPE html>
         </div>
         
         <!-- Info panels (Weather & Calendar side by side) -->
-        <div class="info-panels">
+        <div class="info-panels" style="flex-direction: column; gap: 2vh; width: 100%; max-width: 900px;">
             <!-- Weather panel -->
-            <div class="panel">
+            <div class="panel" style="margin-bottom: 2vh; min-height: 120px;">
                 <div class="panel-title">Weather</div>
                 <div class="weather-content">
                     {% if weather and weather.temp is defined %}
@@ -773,7 +773,7 @@ TEMPLATE = """<!DOCTYPE html>
             </div>
             
             <!-- Calendar panel -->
-            <div class="panel">
+            <div class="panel" style="min-height: 120px;">
                 <div class="panel-title">Events</div>
                 <div class="calendar-content">
                     {% if calendar_events and calendar_events|length > 0 %}
@@ -799,8 +799,8 @@ TEMPLATE = """<!DOCTYPE html>
     <div class="system-info-bar">
         <!-- System status removed as requested -->
 
-        <div class="presence-ticker-bar" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.85); z-index: 200; overflow: hidden; white-space: nowrap;">
-            <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; position: absolute; left: 100vw; will-change: transform;">
+        <div class="presence-ticker-bar" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 3.5vw; background: rgba(24,28,32,0.92); z-index: 200; overflow: hidden; white-space: nowrap; border-top: 2px solid #2ecc40;">
+            <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2.5vw; position: absolute; left: 100vw; will-change: transform; padding: 0.5vw 0;">
                 <span style="color: #2ecc40; font-weight: 700;">Present:</span>
                 {% if present_colleagues and present_colleagues|length > 0 %}
                     {% for person in present_colleagues %}
