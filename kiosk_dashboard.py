@@ -293,8 +293,8 @@ def background_update_loop():
 TEMPLATE = """<!DOCTYPE html>
 <html>
 <head>
-                    <div class="presence-ticker-bar" style="position: fixed; left: 0; top: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.95); z-index: 9999; overflow: hidden; white-space: nowrap; margin: 0; padding: 0;">
-                        <div id="presence-ticker-wrapper" style="display: flex; width: max-content;">
+                    <div class="presence-ticker-bar" style="position: fixed; left: 0; top: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.95); z-index: 9999; overflow: hidden; white-space: nowrap; margin: 0; padding: 0; display: flex; align-items: center;">
+                        <div id="presence-ticker-wrapper" style="display: flex; width: max-content; flex: 1 1 auto;">
                             <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; padding: 0.5vw 0;">
                                 <span style="color: #2ecc40; font-weight: 700;">Present:</span>
                                 {% if present_colleagues and present_colleagues|length > 0 %}
@@ -785,6 +785,11 @@ TEMPLATE = """<!DOCTYPE html>
         <!-- Header with logo -->
         <div class="header-section">
             <img class="company-logo" src="/static/Opses_Logo.jpg" alt="Opses Logo" onerror="this.style.display='none'">
+        </div>
+        <div class="system-status-bar" style="flex: 0 0 auto; margin-left: auto; margin-right: 2vw; font-size: 1vw; color: #b0b7c3; display: flex; align-items: center; gap: 1vw;">
+            <span style="color: #888;">CPU:</span> <span class="cpu-value">{{ sys_status.cpu }}%</span>
+            <span style="color: #888;">RAM:</span> <span class="mem-value">{{ sys_status.mem }}%</span>
+            <span style="color: #888;">Disk:</span> <span class="disk-value">{{ sys_status.disk }}%</span>
         </div>
         
         <!-- Time section -->
