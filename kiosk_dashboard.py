@@ -800,23 +800,44 @@ TEMPLATE = """<!DOCTYPE html>
         <!-- System status removed as requested -->
 
         <div class="presence-ticker-bar" style="position: fixed; left: 0; bottom: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.85); z-index: 200; overflow: hidden; white-space: nowrap;">
-            <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; position: absolute; left: 100vw; will-change: transform;">
-                <span style="color: #2ecc40; font-weight: 700;">Present:</span>
-                {% if present_colleagues and present_colleagues|length > 0 %}
-                    {% for person in present_colleagues %}
-                        <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
-                    {% endfor %}
-                {% else %}
-                    <span style="color: #888;">No one present</span>
-                {% endif %}
-                <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
-                {% if absent_colleagues and absent_colleagues|length > 0 %}
-                    {% for person in absent_colleagues %}
-                        <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
-                    {% endfor %}
-                {% else %}
-                    <span style="color: #888;">None</span>
-                {% endif %}
+            <div id="presence-ticker-wrapper" style="display: flex; width: max-content;">
+                <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; padding: 0.5vw 0;">
+                    <span style="color: #2ecc40; font-weight: 700;">Present:</span>
+                    {% if present_colleagues and present_colleagues|length > 0 %}
+                        {% for person in present_colleagues %}
+                            <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span style="color: #888;">No one present</span>
+                    {% endif %}
+                    <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
+                    {% if absent_colleagues and absent_colleagues|length > 0 %}
+                        {% for person in absent_colleagues %}
+                            <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span style="color: #888;">None</span>
+                    {% endif %}
+                </div>
+                <!-- Duplicate for seamless loop -->
+                <div class="presence-ticker-dup" style="display: inline-block; white-space: nowrap; font-size: 2vw; padding: 0.5vw 0;">
+                    <span style="color: #2ecc40; font-weight: 700;">Present:</span>
+                    {% if present_colleagues and present_colleagues|length > 0 %}
+                        {% for person in present_colleagues %}
+                            <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span style="color: #888;">No one present</span>
+                    {% endif %}
+                    <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
+                    {% if absent_colleagues and absent_colleagues|length > 0 %}
+                        {% for person in absent_colleagues %}
+                            <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
+                        {% endfor %}
+                    {% else %}
+                        <span style="color: #888;">None</span>
+                    {% endif %}
+                </div>
             </div>
         </div>
 
@@ -824,20 +845,22 @@ TEMPLATE = """<!DOCTYPE html>
     <script>
     // Animate the presence ticker for smooth continuous scrolling across the full screen, regardless of content width
     window.addEventListener('DOMContentLoaded', function() {
+        var wrapper = document.getElementById('presence-ticker-wrapper');
         var ticker = document.getElementById('presence-ticker');
         var styleTag = document.getElementById('ticker-style');
-        if (ticker && styleTag) {
+        if (wrapper && ticker && styleTag) {
             var tickerWidth = ticker.offsetWidth;
             var screenWidth = window.innerWidth;
             // Animation duration: at least 15s, longer for more names
             var duration = Math.max(15, (tickerWidth + screenWidth) / 60);
             // Create unique keyframes for this ticker width
             var keyframes = `@keyframes ticker-scroll {\n` +
-                `0% { transform: translateX(${screenWidth}px); }\n` +
+                `0% { transform: translateX(0); }\n` +
                 `100% { transform: translateX(-${tickerWidth}px); }\n` +
             `}`;
             styleTag.textContent = keyframes;
-            ticker.style.animation = `ticker-scroll ${duration}s linear infinite`;
+            wrapper.style.width = (tickerWidth * 2) + 'px';
+            wrapper.style.animation = `ticker-scroll ${duration}s linear infinite`;
         }
     });
     </script>
