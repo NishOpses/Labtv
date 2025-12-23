@@ -12,7 +12,7 @@ import requests
 import json
 import traceback
 from datetime import datetime, timedelta
-from flask import Flask, render_template_string, send_file
+from flask import Flask, render_template_string, send_file, request
 
 # Try to import required modules with fallbacks
 try:
@@ -716,7 +716,7 @@ def get_system_status():
 @app.route("/")
 def public_info():
     try:
-        print(f"[DEBUG] Handling request from {request.remote_addr}")
+        print(f"[DEBUG] Handling request")
         
         # Get all data with error handling
         weather = None
