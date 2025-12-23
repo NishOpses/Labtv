@@ -794,43 +794,6 @@ TEMPLATE = """<!DOCTYPE html>
                 </div>
             </div>
         </div>
-        
-        <!-- Presence panel -->
-        <div class="presence-panel">
-            <div class="panel-title">Office Presence</div>
-            <div class="presence-content">
-                <div class="presence-column">
-                    <div style="color: #2ecc40; font-size: 3vw; margin-bottom: 1vh; font-weight: 600;">Present ({{ present_colleagues|length }})</div>
-                    <ul class="presence-list">
-                        {% if present_colleagues and present_colleagues|length > 0 %}
-                            {% for person in present_colleagues %}
-                            <li><span class="present-badge"></span>{{ person }}</li>
-                            {% endfor %}
-                        {% else %}
-                            <li style="color: #888; font-style: italic;">No colleagues detected</li>
-                        {% endif %}
-                    </ul>
-                </div>
-                <div class="presence-column">
-                    <div style="color: #b0b7c3; font-size: 3vw; margin-bottom: 1vh; font-weight: 600;">Absent ({{ absent_colleagues|length }})</div>
-                    <ul class="presence-list">
-                        {% if absent_colleagues and absent_colleagues|length > 0 %}
-                            {% for person in absent_colleagues %}
-                            <li><span class="absent-badge"></span>{{ person }}</li>
-                            {% endfor %}
-                        {% else %}
-                            <li style="color: #888; font-style: italic;">All colleagues present</li>
-                        {% endif %}
-                    </ul>
-                </div>
-            </div>
-            <!-- Last scan time -->
-            <div style="text-align: center; margin-top: 2vh; padding-top: 1vh; border-top: 1px solid rgba(255, 255, 255, 0.1);">
-                <span style="color: #888; font-size: 2vw;">Last scanned: </span>
-                <span id="last-scan-time" style="color: #3498db; font-size: 2vw;">Just now</span>
-            </div>
-        </div>
-    </div>
     
     <!-- System info bar at bottom -->
     <div class="system-info-bar">
