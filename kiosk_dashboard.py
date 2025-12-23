@@ -820,20 +820,24 @@ TEMPLATE = """<!DOCTYPE html>
             </div>
         </div>
 
-    <style>
-    @keyframes ticker-scroll {
-        0% { transform: translateX(100vw); }
-        100% { transform: translateX(-100%); }
-    }
-    </style>
+    <style id="ticker-style"></style>
     <script>
-    // Animate the presence ticker for smooth continuous scrolling across the full screen
+    // Animate the presence ticker for smooth continuous scrolling across the full screen, regardless of content width
     window.addEventListener('DOMContentLoaded', function() {
         var ticker = document.getElementById('presence-ticker');
-        if (ticker) {
+        var styleTag = document.getElementById('ticker-style');
+        if (ticker && styleTag) {
             var tickerWidth = ticker.offsetWidth;
-            var duration = Math.max(15, tickerWidth / 60); // seconds, adjust speed
-            ticker.style.animation = 'ticker-scroll ' + duration + 's linear infinite';
+            var screenWidth = window.innerWidth;
+            // Animation duration: at least 15s, longer for more names
+            var duration = Math.max(15, (tickerWidth + screenWidth) / 60);
+            // Create unique keyframes for this ticker width
+            var keyframes = `@keyframes ticker-scroll {\n` +
+                `0% { transform: translateX(${screenWidth}px); }\n` +
+                `100% { transform: translateX(-${tickerWidth}px); }\n` +
+            `}`;
+            styleTag.textContent = keyframes;
+            ticker.style.animation = `ticker-scroll ${duration}s linear infinite`;
         }
     });
     </script>
