@@ -882,3 +882,105 @@ TEMPLATE = """<!DOCTYPE html>
     </script>
 </body>
 </html>"""
+
+# =====================
+# Flask Routes
+# =====================
+
+@app.route('/')
+def index():
+    """Main dashboard page"""
+    try:
+        # Get present/absent colleagues
+        present, absent = get_present_absent_colleagues()
+        
+        # Get system status
+        cpu_percent = psutil.cpu_percent(interval=0.5)
+        mem_percent = psutil.virtual_memory().percent
+        disk_percent = psutil.disk_usage('/').percent
+        
+        # Get calendar events
+        calendar_events = get_calendar_events()
+        
+        # Get weather (empty for now - implement later)
+        weather = {}
+        
+        # Get date from useful_info
+        time_info = get_time_info()
+        
+        return render_template_string(TEMPLATE,
+            date=time_info['date'],
+            weather=weather,
+            calendar_events=calendar_events,
+            present_colleagues=present,
+            absent_colleagues=absent,
+            sys_status={
+                'cpu': round(cpu_percent),
+                'mem': round(mem_percent),
+                'disk': round(disk_percent)
+            },
+            ssid=WIFI_SSID
+        )
+    except Exception as e:
+        return f"Error rendering dashboard: {str(e)}", 500
+
+@app.route('/wifi_qr')
+def wifi_qr():
+    """Generate QR code for WiFi"""
+    try:
+        # WiFi QR code format
+        wifi_string = f"WIFI:S:{WIFI_SSID};T:{WIFI_AUTH};P:{WIFI_PASSWORD};;"
+        
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(wifi_string)
+        qr.make(fit=True)
+        
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Save to bytes
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format='PNG')
+        img_bytes.seek(0)
+        
+        return send_file(img_bytes, mimetype='image/png')
+    except Exception as e:
+        return str(e), 500
+
+@app.route('/api/presence')
+def api_presence():
+    """API endpoint for presence data"""
+    try:
+        present, absent = get_present_absent_colleagues()
+        return jsonify({
+            'present': present,
+            'absent': absent,
+            'timestamp': datetime.now().isoformat()
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    """Serve static files"""
+    try:
+        return send_from_directory('static', filename)
+    except Exception as e:
+        return str(e), 404
+
+# =====================
+# Start background thread for updates
+# =====================
+update_thread = threading.Thread(target=background_update_loop, daemon=True)
+update_thread.start()
+
+# =====================
+# Run the app
+# =====================
+if __name__ == '__main__':
+    print(f"[INFO] Starting dashboard on port 8081...")
+    app.run(host='0.0.0.0', port=8081, debug=False, threaded=True)
