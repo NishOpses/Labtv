@@ -755,65 +755,61 @@ TEMPLATE = """<!DOCTYPE html>
         </div>
         
         <!-- Info panels (Weather & Calendar side by side) -->
-        <div class="info-panels">
-            <!-- Weather panel -->
-            <div class="panel">
-                <div class="panel-title">Weather</div>
-                <div class="weather-content">
-                    {% if weather and weather.temp is defined %}
-                    <div class="weather-row">
-                        <img class="weather-icon" src="{{ weather.icon_url }}" alt="{{ weather.desc }}" onerror="this.style.display='none'">
-                        <span class="weather-temp">{{ weather.temp }}°C</span>
-                    </div>
-                    <div class="weather-desc">{{ weather.desc }}</div>
-                    {% else %}
-                    <div class="weather-desc" style="font-size: 4vw; padding: 3vh 0;">Weather data unavailable</div>
-                    {% endif %}
-                </div>
+        <div class="main-container">
+            <!-- Header with logo -->
+            <div class="header-section">
+                <img class="company-logo" src="/static/Opses_Logo.jpg" alt="Opses Logo" onerror="this.style.display='none'">
             </div>
+        
+            <!-- Time section -->
+            <div class="time-section">
+                <div class="public-clock" id="publicclock">
+                    <span id="clock-hour">00</span><span class="clock-colon">:</span><span id="clock-minute">00</span><span class="clock-colon">:</span><span id="clock-second">00</span>
+                </div>
+                <div class="public-date">{{ date }}</div>
+            </div>
+        
+            <!-- Info panels (Weather & Calendar side by side) -->
+            <div class="info-panels">
+                <!-- Weather panel -->
+                <div class="panel">
+                    <div class="panel-title">Weather</div>
+                    <div class="weather-content">
+                        {% if weather and weather.temp is defined %}
+                        <div class="weather-row">
+                            <img class="weather-icon" src="{{ weather.icon_url }}" alt="{{ weather.desc }}" onerror="this.style.display='none'">
+                            <span class="weather-temp">{{ weather.temp }}°C</span>
+                        </div>
+                        <div class="weather-desc">{{ weather.desc }}</div>
+                        {% else %}
+                        <div class="weather-desc" style="font-size: 4vw; padding: 3vh 0;">Weather data unavailable</div>
+                        {% endif %}
+                    </div>
+                </div>
             
-            <!-- Calendar panel -->
-            <div class="panel">
-                <div class="panel-title">Upcoming Events</div>
-                <div class="calendar-content">
-                    {% if calendar_events and calendar_events|length > 0 %}
-                    <ul class="calendar-events-list">
-                        {% for event in calendar_events %}
-                        <li>
-                            <span class="event-date">{{ event.start[5:16] if event.start|length > 16 else event.start }}</span>
-                            <span class="event-summary">{{ event.summary }}</span>
-                            {% if event.location and event.location|length > 0 %}
-                            <span class="event-location">{{ event.location }}</span>
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    {% else %}
-                    <div class="no-events">No upcoming events</div>
-                    {% endif %}
+                <!-- Calendar panel -->
+                <div class="panel">
+                    <div class="panel-title">Upcoming Events</div>
+                    <div class="calendar-content">
+                        {% if calendar_events and calendar_events|length > 0 %}
+                        <ul class="calendar-events-list">
+                            {% for event in calendar_events %}
+                            <li>
+                                <span class="event-date">{{ event.start[5:16] if event.start|length > 16 else event.start }}</span>
+                                <span class="event-summary">{{ event.summary }}</span>
+                                {% if event.location and event.location|length > 0 %}
+                                <span class="event-location">{{ event.location }}</span>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <div class="no-events">No upcoming events</div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Presence panel -->
-        <div class="presence-panel">
-            <div class="panel-title">Office Presence</div>
-            <div class="presence-content">
-                <div class="presence-column">
-                    <div style="color: #2ecc40; font-size: 3vw; margin-bottom: 1vh; font-weight: 600;">Present ({{ present_colleagues|length }})</div>
-                    <ul class="presence-list">
-                        {% if present_colleagues and present_colleagues|length > 0 %}
-                            {% for person in present_colleagues %}
-                            <li><span class="present-badge"></span>{{ person }}</li>
-                            {% endfor %}
-                        {% else %}
-                            <li style="color: #888; font-style: italic;">No colleagues detected</li>
-                        {% endif %}
-                    </ul>
-                </div>
-                <div class="presence-column">
-                    <div style="color: #b0b7c3; font-size: 3vw; margin-bottom: 1vh; font-weight: 600;">Absent ({{ absent_colleagues|length }})</div>
-                    <ul class="presence-list">
                         {% if absent_colleagues and absent_colleagues|length > 0 %}
                             {% for person in absent_colleagues %}
                             <li><span class="absent-badge"></span>{{ person }}</li>
@@ -848,7 +844,28 @@ TEMPLATE = """<!DOCTYPE html>
                 <span class="stat-value disk-value">{{ sys_status.disk }}%</span>
             </div>
         </div>
-        
+
+        <div class="presence-ticker-bar" style="flex: 2; overflow: hidden; white-space: nowrap;">
+            <div id="presence-ticker" style="display: inline-block; animation: ticker-scroll 30s linear infinite; font-size: 2vw;">
+                <span style="color: #2ecc40; font-weight: 700;">Present:</span>
+                {% if present_colleagues and present_colleagues|length > 0 %}
+                    {% for person in present_colleagues %}
+                        <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span style="color: #888;">No one present</span>
+                {% endif %}
+                <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
+                {% if absent_colleagues and absent_colleagues|length > 0 %}
+                    {% for person in absent_colleagues %}
+                        <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span style="color: #888;">None</span>
+                {% endif %}
+            </div>
+        </div>
+
         <div class="wifi-section">
             <div class="wifi-info">
                 <div class="wifi-ssid">{{ ssid }}</div>
@@ -857,6 +874,13 @@ TEMPLATE = """<!DOCTYPE html>
             <img class="wifi-qr-small" src="/wifi_qr" alt="WiFi QR Code">
         </div>
     </div>
+
+    <style>
+    @keyframes ticker-scroll {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+    </style>
     
     <script>
         function pad(n) { return n.toString().padStart(2, '0'); }
