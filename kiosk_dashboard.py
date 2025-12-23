@@ -834,19 +834,13 @@ TEMPLATE = """<!DOCTYPE html>
     
     <!-- System info bar at bottom -->
     <div class="system-info-bar">
-        <div class="system-stats" style="font-size: 0.7vw; padding: 0; min-width: 0; line-height: 1;">
-            <div class="stat-item" style="display: inline-block; margin-right: 0.5vw;">
-                <span class="stat-label">CPU:</span>
-                <span class="stat-value cpu-value">{{ sys_status.cpu }}%</span>
-            </div>
-            <div class="stat-item" style="display: inline-block; margin-right: 0.5vw;">
-                <span class="stat-label">RAM:</span>
-                <span class="stat-value mem-value">{{ sys_status.mem }}%</span>
-            </div>
-            <div class="stat-item" style="display: inline-block;">
-                <span class="stat-label">Disk:</span>
-                <span class="stat-value disk-value">{{ sys_status.disk }}%</span>
-            </div>
+        <div class="system-stats-fixed" style="position: fixed; bottom: 0.5vh; left: 1vw; font-size: 0.6vw; color: #b0b7c3; background: rgba(24,28,32,0.7); padding: 0.2vw 0.6vw; border-radius: 8px; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15); line-height: 1.2;">
+            <span class="stat-label">CPU:</span>
+            <span class="stat-value cpu-value">{{ sys_status.cpu }}%</span>
+            <span class="stat-label" style="margin-left:0.7vw;">RAM:</span>
+            <span class="stat-value mem-value">{{ sys_status.mem }}%</span>
+            <span class="stat-label" style="margin-left:0.7vw;">Disk:</span>
+            <span class="stat-value disk-value">{{ sys_status.disk }}%</span>
         </div>
 
         <div class="presence-summary-bar" style="display: flex; align-items: center; gap: 2vw; margin-left: 2vw; margin-right: 2vw;">
