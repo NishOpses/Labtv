@@ -786,11 +786,6 @@ TEMPLATE = """<!DOCTYPE html>
         <div class="header-section">
             <img class="company-logo" src="/static/Opses_Logo.jpg" alt="Opses Logo" onerror="this.style.display='none'">
         </div>
-        <div class="system-status-bar" style="flex: 0 0 auto; margin-left: auto; margin-right: 2vw; font-size: 1vw; color: #b0b7c3; display: flex; align-items: center; gap: 1vw;">
-            <span style="color: #888;">CPU:</span> <span class="cpu-value">{{ sys_status.cpu }}%</span>
-            <span style="color: #888;">RAM:</span> <span class="mem-value">{{ sys_status.mem }}%</span>
-            <span style="color: #888;">Disk:</span> <span class="disk-value">{{ sys_status.disk }}%</span>
-        </div>
         
         <!-- Time section -->
         <div class="time-section">
