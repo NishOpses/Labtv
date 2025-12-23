@@ -836,51 +836,6 @@ TEMPLATE = """<!DOCTYPE html>
             </div>
         </div>
     
-    <!-- System info bar at bottom -->
-    <div class="system-info-bar">
-        <!-- System status removed as requested -->
-
-    <div class="presence-ticker-bar" style="position: fixed; left: 0; top: 0; width: 100vw; height: 2.5vw; background: rgba(24,28,32,0.95); z-index: 9999; overflow: hidden; white-space: nowrap; margin: 0; padding: 0;">
-            <div id="presence-ticker-wrapper" style="display: flex; width: max-content;">
-                <div id="presence-ticker" style="display: inline-block; white-space: nowrap; font-size: 2vw; padding: 0.5vw 0;">
-                    <span style="color: #2ecc40; font-weight: 700;">Present:</span>
-                    {% if present_colleagues and present_colleagues|length > 0 %}
-                        {% for person in present_colleagues %}
-                            <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
-                        {% endfor %}
-                    {% else %}
-                        <span style="color: #888;">No one present</span>
-                    {% endif %}
-                    <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
-                    {% if absent_colleagues and absent_colleagues|length > 0 %}
-                        {% for person in absent_colleagues %}
-                            <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
-                        {% endfor %}
-                    {% else %}
-                        <span style="color: #888;">None</span>
-                    {% endif %}
-                </div>
-                <!-- Duplicate for seamless loop -->
-                <div class="presence-ticker-dup" style="display: inline-block; white-space: nowrap; font-size: 2vw; padding: 0.5vw 0;">
-                    <span style="color: #2ecc40; font-weight: 700;">Present:</span>
-                    {% if present_colleagues and present_colleagues|length > 0 %}
-                        {% for person in present_colleagues %}
-                            <span style="color: #2ecc40; margin-right: 2vw;">{{ person }}</span>
-                        {% endfor %}
-                    {% else %}
-                        <span style="color: #888;">No one present</span>
-                    {% endif %}
-                    <span style="color: #b0b7c3; font-weight: 700; margin-left: 3vw;">Absent:</span>
-                    {% if absent_colleagues and absent_colleagues|length > 0 %}
-                        {% for person in absent_colleagues %}
-                            <span style="color: #b0b7c3; margin-right: 2vw;">{{ person }}</span>
-                        {% endfor %}
-                    {% else %}
-                        <span style="color: #888;">None</span>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
 
     <style id="ticker-style"></style>
     <script>
