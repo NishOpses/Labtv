@@ -12,7 +12,7 @@ import requests
 import json
 import traceback
 from datetime import datetime, timedelta
-from flask import Flask, render_template_string, send_file, request
+from flask import Flask, render_template_string, send_file, request, jsonify
 
 # Try to import required modules with fallbacks
 try:
@@ -30,60 +30,64 @@ except ImportError:
     ics_available = False
 
 # =====================
-# MAC Address-based Colleague Presence Detection
+# Network Scanner Integration
 # =====================
-COLLEAGUES_FILE = os.path.join(os.path.dirname(__file__), "colleagues.json")
+try:
+    from network_scanner import NetworkScanner
+    NETWORK_SCANNER_AVAILABLE = True
+    print("[DEBUG] Network scanner module loaded successfully")
+    network_scanner = NetworkScanner()
+except ImportError as e:
+    print(f"[WARNING] Network scanner module not available: {e}")
+    print("[WARNING] Falling back to basic ARP table detection")
+    NETWORK_SCANNER_AVAILABLE = False
 
-def load_colleagues():
+# Fallback functions
+def get_present_absent_colleagues_fallback():
+    """Fallback function using old ARP table method"""
     try:
-        if not os.path.exists(COLLEAGUES_FILE):
-            print(f"[DEBUG] Colleagues file not found: {COLLEAGUES_FILE}")
-            return {}
-        with open(COLLEAGUES_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            if isinstance(data, dict):
-                print(f"[DEBUG] Loaded {len(data)} colleagues")
-                return data
-            else:
-                print("[DEBUG] Colleagues file is not a dictionary")
-                return {}
-    except Exception as e:
-        print(f"[DEBUG] Error loading colleagues: {e}")
-        return {}
-
-def get_arp_table():
-    try:
+        colleagues_file = os.path.join(os.path.dirname(__file__), "colleagues.json")
+        if not os.path.exists(colleagues_file):
+            print("[DEBUG] Colleagues file not found")
+            return [], []
+        
+        with open(colleagues_file, "r", encoding="utf-8") as f:
+            colleagues = json.load(f)
+        
+        # Get ARP table
         if platform.system().lower() == "windows":
             output = subprocess.check_output(["arp", "-a"], encoding="utf-8", stderr=subprocess.DEVNULL)
         else:
             output = subprocess.check_output(["arp", "-a"], encoding="utf-8", stderr=subprocess.DEVNULL)
-        return output
-    except Exception as e:
-        print(f"[DEBUG] Error running arp -a: {e}")
-        return ""
-
-def get_present_absent_colleagues():
-    try:
-        colleagues = load_colleagues()
-        arp_table = get_arp_table()
+        
         present = []
         absent = []
         
-        if not arp_table:
-            print("[DEBUG] ARP table is empty, cannot detect presence")
-            return [], []
-            
         for name, mac in colleagues.items():
-            if mac and mac.lower() in arp_table.lower():
+            if mac and mac.lower() in output.lower():
                 present.append(name)
             else:
                 absent.append(name)
                 
-        print(f"[DEBUG] Present: {len(present)}, Absent: {len(absent)}")
+        print(f"[DEBUG] Fallback: Present: {len(present)}, Absent: {len(absent)}")
         return present, absent
+        
     except Exception as e:
-        print(f"[DEBUG] Error in get_present_absent_colleagues: {e}")
+        print(f"[DEBUG] Fallback detection error: {e}")
         return [], []
+
+def get_present_absent_colleagues():
+    """Get presence using new scanner or fallback"""
+    if NETWORK_SCANNER_AVAILABLE:
+        try:
+            present, absent = network_scanner.detect_presence()
+            print(f"[DEBUG] Scanner: Present: {len(present)}, Absent: {len(absent)}")
+            return present, absent
+        except Exception as e:
+            print(f"[ERROR] Scanner failed: {e}")
+            return get_present_absent_colleagues_fallback()
+    else:
+        return get_present_absent_colleagues_fallback()
 
 # =====================
 # Calendar Feed Config
@@ -211,7 +215,7 @@ def background_update_loop():
         time.sleep(UPDATE_CHECK_INTERVAL)
 
 # =====================
-# Optimized HTML Template for Portrait 1080x1920
+# Enhanced HTML Template with Modern UI
 # =====================
 TEMPLATE = """<!DOCTYPE html>
 <html>
@@ -219,7 +223,21 @@ TEMPLATE = """<!DOCTYPE html>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Opses Lab Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary: #2ecc40;
+            --secondary: #3498db;
+            --accent: #9b59b6;
+            --dark: #0a0e14;
+            --darker: #1a1f29;
+            --light: #ffffff;
+            --gray: #b0b7c3;
+            --success: #2ecc40;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+        }
+        
         * {
             box-sizing: border-box;
             margin: 0;
@@ -227,12 +245,12 @@ TEMPLATE = """<!DOCTYPE html>
         }
         
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
+            font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
             margin: 0;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #0a0e14 0%, #1a1f29 100%);
-            color: #fff;
+            background: linear-gradient(135deg, var(--dark) 0%, var(--darker) 100%);
+            color: var(--light);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -240,16 +258,16 @@ TEMPLATE = """<!DOCTYPE html>
             position: relative;
         }
         
-        /* Main content container - optimized for vertical flow */
+        /* Main content container */
         .main-container {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
-            max-width: 1000px;
-            padding: 2vh 3vw;
-            gap: 3vh;
-            margin-top: 1vh;
+            max-width: 1200px;
+            padding: 20px;
+            gap: 20px;
+            margin-top: 10px;
             overflow-y: auto;
             height: 100vh;
         }
@@ -260,98 +278,116 @@ TEMPLATE = """<!DOCTYPE html>
             flex-direction: column;
             align-items: center;
             width: 100%;
-            margin-bottom: 1vh;
+            margin-bottom: 10px;
         }
         
         .company-logo {
-            width: 25vw;
-            max-width: 250px;
-            min-width: 150px;
-            background: #fff;
+            width: 200px;
+            background: var(--light);
             border-radius: 20px;
-            padding: 8px;
-            margin-bottom: 2vh;
-            box-shadow: 0 6px 30px rgba(0,0,0,0.4);
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 3px solid var(--primary);
         }
         
-        /* Time section - larger and centered */
+        /* Time section */
         .time-section {
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: rgba(24, 28, 32, 0.85);
-            border-radius: 20px;
-            padding: 2vh 4vw;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            width: 90%;
-            max-width: 900px;
-            margin-bottom: 1vh;
+            background: rgba(24, 28, 32, 0.9);
+            border-radius: 25px;
+            padding: 25px 40px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+            width: 95%;
+            max-width: 1000px;
+            margin-bottom: 15px;
             backdrop-filter: blur(10px);
+            border: 1px solid rgba(46, 204, 64, 0.2);
         }
         
         .public-clock {
-            font-size: 15vw;
-            color: #fff;
+            font-size: 120px;
+            color: var(--light);
             font-weight: 800;
-            letter-spacing: 0.05em;
-            text-shadow: 0 4px 20px rgba(0,0,0,0.7);
+            letter-spacing: 5px;
+            text-shadow: 0 5px 20px rgba(0,0,0,0.8);
             font-family: 'Courier New', monospace;
             line-height: 1;
-            margin: 1vh 0;
+            margin: 10px 0;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .clock-colon {
-            animation: blink 2s infinite;
+            animation: blink 1.5s infinite;
         }
         
         @keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            50% { opacity: 0.3; }
         }
         
         .public-date {
-            font-size: 4vw;
-            color: #b0b7c3;
+            font-size: 28px;
+            color: var(--gray);
             font-weight: 500;
             text-align: center;
-            margin-top: 1vh;
-            letter-spacing: 0.05em;
+            margin-top: 10px;
+            letter-spacing: 1px;
         }
         
-        /* Info panels - side by side on portrait */
-        .info-panels {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-between;
+        /* Info panels grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
             width: 100%;
-            max-width: 950px;
-            gap: 2vw;
-            margin: 1vh 0;
+            max-width: 1200px;
+            margin: 10px 0;
         }
         
-        .panel {
-            flex: 1;
-            background: rgba(24, 28, 32, 0.85);
+        .card {
+            background: rgba(24, 28, 32, 0.9);
             border-radius: 20px;
-            padding: 2vh 2.5vw;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
-            min-height: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
             display: flex;
             flex-direction: column;
+            height: 100%;
         }
         
-        .panel-title {
-            font-size: 3.5vw;
-            color: #2ecc40;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .card-icon {
+            font-size: 28px;
+            margin-right: 15px;
+            color: var(--primary);
+        }
+        
+        .card-title {
+            font-size: 26px;
+            color: var(--primary);
             font-weight: 700;
-            margin-bottom: 1.5vh;
-            text-align: center;
-            border-bottom: 2px solid #2ecc40;
-            padding-bottom: 0.5vh;
         }
         
-        /* Weather panel */
+        /* Weather card */
         .weather-content {
             display: flex;
             flex-direction: column;
@@ -360,208 +396,265 @@ TEMPLATE = """<!DOCTYPE html>
             flex-grow: 1;
         }
         
-        .weather-row {
+        .weather-main {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 3vw;
-            margin-bottom: 1vh;
+            gap: 20px;
+            margin-bottom: 15px;
         }
         
         .weather-icon {
-            width: 15vw;
-            max-width: 120px;
-            min-width: 80px;
+            width: 100px;
+            height: 100px;
         }
         
         .weather-temp {
-            font-size: 10vw;
-            color: #2ecc40;
+            font-size: 72px;
             font-weight: 800;
-            text-shadow: 0 2px 10px rgba(46, 204, 64, 0.3);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         
         .weather-desc {
-            font-size: 3vw;
-            color: #b0b7c3;
+            font-size: 22px;
+            color: var(--gray);
             text-align: center;
-            margin-top: 0.5vh;
+            margin-bottom: 10px;
         }
         
-        /* Calendar panel */
-        .calendar-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .calendar-events-list {
+        /* Calendar card */
+        .calendar-list {
             list-style: none;
             padding: 0;
             margin: 0;
             flex-grow: 1;
             overflow-y: auto;
-            max-height: 30vh;
+            max-height: 250px;
         }
         
-        .calendar-events-list::-webkit-scrollbar {
+        .calendar-list::-webkit-scrollbar {
             width: 6px;
         }
         
-        .calendar-events-list::-webkit-scrollbar-track {
+        .calendar-list::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.05);
             border-radius: 3px;
         }
         
-        .calendar-events-list::-webkit-scrollbar-thumb {
-            background: #2ecc40;
+        .calendar-list::-webkit-scrollbar-thumb {
+            background: var(--primary);
             border-radius: 3px;
         }
         
-        .calendar-events-list li {
-            padding: 1.5vh 0;
+        .calendar-item {
+            padding: 15px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
         }
         
-        .event-date {
-            color: #2ecc40;
+        .event-time {
+            color: var(--primary);
             font-weight: 700;
-            font-size: 2.5vw;
-            display: block;
-            margin-bottom: 0.3vh;
+            font-size: 18px;
+            margin-bottom: 5px;
         }
         
-        .event-summary {
-            color: #fff;
-            font-size: 2.8vw;
-            display: block;
-            margin-bottom: 0.3vh;
+        .event-title {
+            color: var(--light);
+            font-size: 20px;
+            margin-bottom: 5px;
         }
         
         .event-location {
-            color: #b0b7c3;
-            font-size: 2.2vw;
-            display: block;
+            color: var(--gray);
+            font-size: 16px;
             font-style: italic;
         }
         
         .no-events {
-            color: #888;
-            font-size: 3vw;
+            color: var(--gray);
+            font-size: 20px;
             text-align: center;
-            padding: 3vh 0;
+            padding: 30px 0;
             font-style: italic;
         }
         
-        /* Presence panel - moved to main flow */
-        .presence-panel {
-            width: 90%;
-            max-width: 900px;
-            background: rgba(24, 28, 32, 0.85);
-            border-radius: 20px;
-            padding: 2vh 3vw;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-            margin: 1vh 0 3vh 0;
-            backdrop-filter: blur(10px);
+        /* Presence card */
+        .presence-card {
+            grid-column: span 2;
         }
         
-        .presence-content {
-            display: flex;
-            flex-direction: row;
-            justify-content: space-around;
-            flex-wrap: wrap;
-            gap: 2vw;
-            margin-top: 1vh;
+        .presence-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .stat-value {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+        
+        .stat-present .stat-value { color: var(--success); }
+        .stat-absent .stat-value { color: var(--gray); }
+        .stat-total .stat-value { color: var(--secondary); }
+        
+        .stat-label {
+            font-size: 18px;
+            color: var(--gray);
+            font-weight: 600;
+        }
+        
+        .presence-lists {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 10px;
         }
         
         .presence-column {
-            flex: 1;
-            min-width: 200px;
+            display: flex;
+            flex-direction: column;
         }
+        
+        .column-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid;
+        }
+        
+        .present-title { color: var(--success); border-color: var(--success); }
+        .absent-title { color: var(--gray); border-color: var(--gray); }
         
         .presence-list {
             list-style: none;
             padding: 0;
             margin: 0;
+            flex-grow: 1;
         }
         
-        .presence-list li {
-            padding: 0.8vh 0;
-            font-size: 2.8vw;
+        .presence-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
             display: flex;
             align-items: center;
+            transition: background 0.3s;
+        }
+        
+        .presence-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .presence-badge {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 15px;
         }
         
         .present-badge {
-            display: inline-block;
-            width: 2.5vw;
-            height: 2.5vw;
-            min-width: 12px;
-            min-height: 12px;
-            background-color: #2ecc40;
-            border-radius: 50%;
-            margin-right: 1.5vw;
-            box-shadow: 0 0 8px #2ecc40;
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
         }
         
         .absent-badge {
-            display: inline-block;
-            width: 2.5vw;
-            height: 2.5vw;
-            min-width: 12px;
-            min-height: 12px;
-            background-color: #666;
-            border-radius: 50%;
-            margin-right: 1.5vw;
+            background-color: var(--gray);
         }
         
-        /* System info bar - at bottom */
+        .person-name {
+            font-size: 20px;
+            font-weight: 600;
+            flex-grow: 1;
+        }
+        
+        .person-status {
+            font-size: 14px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        
+        .status-present {
+            background: rgba(46, 204, 64, 0.2);
+            color: var(--success);
+        }
+        
+        .status-absent {
+            background: rgba(176, 183, 195, 0.2);
+            color: var(--gray);
+        }
+        
+        /* System info bar */
         .system-info-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             width: 100%;
             background: rgba(10, 14, 20, 0.95);
-            padding: 1vh 3vw;
+            padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-top: 2px solid #2ecc40;
+            border-top: 2px solid var(--primary);
             z-index: 1000;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
         }
         
         .system-stats {
             display: flex;
-            gap: 4vw;
+            gap: 40px;
         }
         
         .stat-item {
             display: flex;
             align-items: center;
-            gap: 1vw;
+            gap: 10px;
         }
         
-        .stat-label {
-            font-size: 2.5vw;
-            color: #b0b7c3;
+        .stat-icon {
+            font-size: 20px;
+        }
+        
+        .cpu-icon { color: var(--success); }
+        .mem-icon { color: var(--secondary); }
+        .disk-icon { color: var(--accent); }
+        
+        .stat-label-small {
+            font-size: 16px;
+            color: var(--gray);
             font-weight: 600;
         }
         
-        .stat-value {
-            font-size: 3vw;
-            color: #fff;
+        .stat-value-small {
+            font-size: 22px;
+            color: var(--light);
             font-weight: 700;
+            min-width: 60px;
         }
-        
-        .cpu-value { color: #2ecc40; }
-        .mem-value { color: #3498db; }
-        .disk-value { color: #9b59b6; }
         
         .wifi-section {
             display: flex;
             align-items: center;
-            gap: 2vw;
+            gap: 20px;
         }
         
         .wifi-info {
@@ -569,100 +662,140 @@ TEMPLATE = """<!DOCTYPE html>
         }
         
         .wifi-ssid {
-            font-size: 2.8vw;
-            color: #fff;
-            font-weight: 600;
-            margin-bottom: 0.3vh;
+            font-size: 20px;
+            color: var(--light);
+            font-weight: 700;
+            margin-bottom: 5px;
         }
         
         .wifi-instruction {
-            font-size: 2.2vw;
-            color: #b0b7c3;
+            font-size: 14px;
+            color: var(--gray);
         }
         
         .wifi-qr-small {
-            width: 10vw;
-            min-width: 70px;
-            max-width: 100px;
-            background: #fff;
+            width: 80px;
+            background: var(--light);
             border-radius: 10px;
-            padding: 5px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            border: 2px solid var(--primary);
         }
         
-        /* Responsive adjustments */
-        @media (max-width: 800px) {
-            .info-panels {
-                flex-direction: column;
-                gap: 2vh;
+        /* Refresh button */
+        .refresh-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(46, 204, 64, 0.4);
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .refresh-button:hover {
+            transform: rotate(180deg);
+            box-shadow: 0 8px 20px rgba(46, 204, 64, 0.6);
+        }
+        
+        /* Last scan info */
+        .last-scan {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--gray);
+            font-size: 16px;
+        }
+        
+        .scan-time {
+            color: var(--secondary);
+            font-weight: 600;
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
             }
             
-            .panel {
-                width: 100%;
+            .presence-card {
+                grid-column: span 1;
             }
             
-            .presence-content {
-                flex-direction: column;
-                gap: 1vh;
+            .presence-lists {
+                grid-template-columns: 1fr;
+                gap: 20px;
             }
             
             .public-clock {
-                font-size: 18vw;
+                font-size: 80px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 10px;
+            }
+            
+            .public-clock {
+                font-size: 60px;
             }
             
             .public-date {
-                font-size: 5vw;
+                font-size: 20px;
             }
             
-            .panel-title {
-                font-size: 4.5vw;
+            .card-title {
+                font-size: 22px;
             }
             
             .weather-temp {
-                font-size: 12vw;
+                font-size: 50px;
             }
             
-            .weather-desc {
-                font-size: 4vw;
+            .system-stats {
+                gap: 20px;
             }
             
-            .event-date, .event-summary {
-                font-size: 3.8vw;
-            }
-            
-            .presence-list li {
-                font-size: 3.8vw;
+            .stat-value-small {
+                font-size: 18px;
             }
         }
         
-        /* For very tall screens */
-        @media (min-height: 1800px) {
-            .main-container {
-                padding-top: 5vh;
-            }
-            
-            .time-section {
-                padding: 3vh 4vw;
-            }
-            
-            .panel {
-                min-height: 250px;
-            }
-        }
-        
-        /* Animation for presence badges */
+        /* Animations */
         @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
+            0% { opacity: 0.6; box-shadow: 0 0 5px var(--success); }
+            50% { opacity: 1; box-shadow: 0 0 15px var(--success); }
+            100% { opacity: 0.6; box-shadow: 0 0 5px var(--success); }
         }
         
-        .present-badge {
-            animation: pulse 2s infinite;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .card {
+            animation: fadeIn 0.5s ease-out;
         }
     </style>
 </head>
 <body>
+    <!-- Refresh Button -->
+    <button class="refresh-button" onclick="refreshPresence()">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+    
     <div class="main-container">
         <!-- Header with logo -->
         <div class="header-section">
@@ -677,74 +810,143 @@ TEMPLATE = """<!DOCTYPE html>
             <div class="public-date">{{ date }}</div>
         </div>
         
-        <!-- Info panels (Weather & Calendar side by side) -->
-        <div class="info-panels">
-            <!-- Weather panel -->
-            <div class="panel">
-                <div class="panel-title">Weather</div>
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Weather Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-cloud-sun card-icon"></i>
+                    <div class="card-title">Weather</div>
+                </div>
                 <div class="weather-content">
                     {% if weather and weather.temp is defined %}
-                    <div class="weather-row">
+                    <div class="weather-main">
                         <img class="weather-icon" src="{{ weather.icon_url }}" alt="{{ weather.desc }}" onerror="this.style.display='none'">
-                        <span class="weather-temp">{{ weather.temp }}°C</span>
+                        <div class="weather-temp">{{ weather.temp }}°C</div>
                     </div>
                     <div class="weather-desc">{{ weather.desc }}</div>
                     {% else %}
-                    <div class="weather-desc" style="font-size: 4vw; padding: 3vh 0;">Weather data unavailable</div>
+                    <div class="weather-desc" style="font-size: 22px; padding: 30px 0; text-align: center;">
+                        <i class="fas fa-cloud-slash" style="font-size: 48px; margin-bottom: 15px; display: block; color: var(--gray);"></i>
+                        Weather data unavailable
+                    </div>
                     {% endif %}
                 </div>
             </div>
             
-            <!-- Calendar panel -->
-            <div class="panel">
-                <div class="panel-title">Upcoming Events</div>
+            <!-- Calendar Card -->
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-calendar-alt card-icon"></i>
+                    <div class="card-title">Upcoming Events</div>
+                </div>
                 <div class="calendar-content">
                     {% if calendar_events and calendar_events|length > 0 %}
-                    <ul class="calendar-events-list">
+                    <ul class="calendar-list">
                         {% for event in calendar_events %}
-                        <li>
-                            <span class="event-date">{{ event.start[5:16] if event.start|length > 16 else event.start }}</span>
-                            <span class="event-summary">{{ event.summary }}</span>
+                        <li class="calendar-item">
+                            <div class="event-time">
+                                <i class="far fa-clock"></i> {{ event.start[5:16] if event.start|length > 16 else event.start }}
+                            </div>
+                            <div class="event-title">{{ event.summary }}</div>
                             {% if event.location and event.location|length > 0 %}
-                            <span class="event-location">{{ event.location }}</span>
+                            <div class="event-location">
+                                <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                            </div>
                             {% endif %}
                         </li>
                         {% endfor %}
                     </ul>
                     {% else %}
-                    <div class="no-events">No upcoming events</div>
+                    <div class="no-events">
+                        <i class="far fa-calendar-times" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
+                        No upcoming events
+                    </div>
                     {% endif %}
                 </div>
             </div>
-        </div>
-        
-        <!-- Presence panel -->
-        <div class="presence-panel">
-            <div class="panel-title">Lab Presence</div>
-            <div class="presence-content">
-                <div class="presence-column">
-                    <div style="color: #2ecc40; font-size: 3vw; margin-bottom: 1vh; font-weight: 600;">Present ({{ present_colleagues|length }})</div>
-                    <ul class="presence-list">
-                        {% if present_colleagues and present_colleagues|length > 0 %}
-                            {% for person in present_colleagues %}
-                            <li><span class="present-badge"></span>{{ person }}</li>
-                            {% endfor %}
-                        {% else %}
-                            <li style="color: #888; font-style: italic;">No colleagues detected</li>
-                        {% endif %}
-                    </ul>
+            
+            <!-- Presence Card -->
+            <div class="card presence-card">
+                <div class="card-header">
+                    <i class="fas fa-users card-icon"></i>
+                    <div class="card-title">Office Presence</div>
                 </div>
-                <div class="presence-column">
-                    <div style="color: #b0b7c3; font-size: 3vw; margin-bottom: 1vh; font-weight: 600;">Absent ({{ absent_colleagues|length }})</div>
-                    <ul class="presence-list">
-                        {% if absent_colleagues and absent_colleagues|length > 0 %}
-                            {% for person in absent_colleagues %}
-                            <li><span class="absent-badge"></span>{{ person }}</li>
-                            {% endfor %}
-                        {% else %}
-                            <li style="color: #888; font-style: italic;">All colleagues present</li>
-                        {% endif %}
-                    </ul>
+                
+                <!-- Stats -->
+                <div class="presence-stats">
+                    <div class="stat-box stat-present">
+                        <div class="stat-value" id="present-count">{{ present_colleagues|length }}</div>
+                        <div class="stat-label">Present</div>
+                    </div>
+                    <div class="stat-box stat-absent">
+                        <div class="stat-value" id="absent-count">{{ absent_colleagues|length }}</div>
+                        <div class="stat-label">Absent</div>
+                    </div>
+                    <div class="stat-box stat-total">
+                        <div class="stat-value" id="total-count">{{ present_colleagues|length + absent_colleagues|length }}</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
+                
+                <!-- Presence Lists -->
+                <div class="presence-lists">
+                    <!-- Present Column -->
+                    <div class="presence-column">
+                        <div class="column-title present-title">
+                            <i class="fas fa-check-circle"></i> In Office
+                        </div>
+                        <ul class="presence-list" id="present-list">
+                            {% if present_colleagues and present_colleagues|length > 0 %}
+                                {% for person in present_colleagues %}
+                                <li class="presence-item">
+                                    <div class="presence-badge present-badge"></div>
+                                    <div class="person-name">{{ person }}</div>
+                                    <div class="person-status status-present">Connected</div>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="presence-item" style="justify-content: center; text-align: center;">
+                                    <div class="person-name" style="color: var(--gray); font-style: italic;">
+                                        <i class="fas fa-user-slash" style="margin-right: 10px;"></i>
+                                        No one in office
+                                    </div>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                    
+                    <!-- Absent Column -->
+                    <div class="presence-column">
+                        <div class="column-title absent-title">
+                            <i class="fas fa-times-circle"></i> Out of Office
+                        </div>
+                        <ul class="presence-list" id="absent-list">
+                            {% if absent_colleagues and absent_colleagues|length > 0 %}
+                                {% for person in absent_colleagues %}
+                                <li class="presence-item">
+                                    <div class="presence-badge absent-badge"></div>
+                                    <div class="person-name">{{ person }}</div>
+                                    <div class="person-status status-absent">Away</div>
+                                </li>
+                                {% endfor %}
+                            {% else %}
+                                <li class="presence-item" style="justify-content: center; text-align: center;">
+                                    <div class="person-name" style="color: var(--success); font-style: italic;">
+                                        <i class="fas fa-user-check" style="margin-right: 10px;"></i>
+                                        Everyone is here!
+                                    </div>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Last scan info -->
+                <div class="last-scan">
+                    <i class="fas fa-clock"></i> Last scanned: 
+                    <span class="scan-time" id="last-scan-time">Just now</span>
+                    • Auto-refresh: <span id="refresh-countdown">30</span>s
                 </div>
             </div>
         </div>
@@ -754,16 +956,19 @@ TEMPLATE = """<!DOCTYPE html>
     <div class="system-info-bar">
         <div class="system-stats">
             <div class="stat-item">
-                <span class="stat-label">CPU:</span>
-                <span class="stat-value cpu-value">{{ sys_status.cpu }}%</span>
+                <i class="fas fa-microchip cpu-icon stat-icon"></i>
+                <span class="stat-label-small">CPU:</span>
+                <span class="stat-value-small cpu-value">{{ sys_status.cpu }}%</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">RAM:</span>
-                <span class="stat-value mem-value">{{ sys_status.mem }}%</span>
+                <i class="fas fa-memory mem-icon stat-icon"></i>
+                <span class="stat-label-small">RAM:</span>
+                <span class="stat-value-small mem-value">{{ sys_status.mem }}%</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Disk:</span>
-                <span class="stat-value disk-value">{{ sys_status.disk }}%</span>
+                <i class="fas fa-hdd disk-icon stat-icon"></i>
+                <span class="stat-label-small">Disk:</span>
+                <span class="stat-value-small disk-value">{{ sys_status.disk }}%</span>
             </div>
         </div>
         
@@ -777,6 +982,7 @@ TEMPLATE = """<!DOCTYPE html>
     </div>
     
     <script>
+        // Update clock
         function pad(n) { return n.toString().padStart(2, '0'); }
         
         function updateClock() {
@@ -790,27 +996,140 @@ TEMPLATE = """<!DOCTYPE html>
             }
         }
         
-        // Initial update
         updateClock();
-        
-        // Update every second
         setInterval(updateClock, 1000);
         
-        // Smooth scroll for calendar if needed
-        document.addEventListener('DOMContentLoaded', function() {
-            const calendarList = document.querySelector('.calendar-events-list');
-            if (calendarList && calendarList.scrollHeight > calendarList.clientHeight) {
-                // If content overflows, add slight auto-scroll
-                let scrollPos = 0;
-                const scrollInterval = setInterval(() => {
-                    if (scrollPos >= calendarList.scrollHeight - calendarList.clientHeight) {
-                        scrollPos = 0;
+        // Refresh presence data
+        let refreshCountdown = 30;
+        let countdownInterval;
+        
+        function startCountdown() {
+            refreshCountdown = 30;
+            clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                refreshCountdown--;
+                document.getElementById('refresh-countdown').textContent = refreshCountdown;
+                
+                if (refreshCountdown <= 0) {
+                    refreshPresence();
+                }
+            }, 1000);
+        }
+        
+        function refreshPresence() {
+            // Show loading state
+            const refreshBtn = document.querySelector('.refresh-button');
+            refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            refreshBtn.style.pointerEvents = 'none';
+            
+            fetch('/api/presence')
+                .then(response => response.json())
+                .then(data => {
+                    // Update present list
+                    const presentList = document.getElementById('present-list');
+                    const absentList = document.getElementById('absent-list');
+                    
+                    // Clear current lists
+                    presentList.innerHTML = '';
+                    absentList.innerHTML = '';
+                    
+                    // Update present
+                    if (data.present && data.present.length > 0) {
+                        data.present.forEach(person => {
+                            const li = document.createElement('li');
+                            li.className = 'presence-item';
+                            li.innerHTML = `
+                                <div class="presence-badge present-badge"></div>
+                                <div class="person-name">${person}</div>
+                                <div class="person-status status-present">Connected</div>
+                            `;
+                            presentList.appendChild(li);
+                        });
                     } else {
-                        scrollPos += 1;
+                        const li = document.createElement('li');
+                        li.className = 'presence-item';
+                        li.style.justifyContent = 'center';
+                        li.style.textAlign = 'center';
+                        li.innerHTML = `
+                            <div class="person-name" style="color: #b0b7c3; font-style: italic;">
+                                <i class="fas fa-user-slash" style="margin-right: 10px;"></i>
+                                No one in office
+                            </div>
+                        `;
+                        presentList.appendChild(li);
                     }
-                    calendarList.scrollTop = scrollPos;
-                }, 50);
+                    
+                    // Update absent
+                    if (data.absent && data.absent.length > 0) {
+                        data.absent.forEach(person => {
+                            const li = document.createElement('li');
+                            li.className = 'presence-item';
+                            li.innerHTML = `
+                                <div class="presence-badge absent-badge"></div>
+                                <div class="person-name">${person}</div>
+                                <div class="person-status status-absent">Away</div>
+                            `;
+                            absentList.appendChild(li);
+                        });
+                    } else {
+                        const li = document.createElement('li');
+                        li.className = 'presence-item';
+                        li.style.justifyContent = 'center';
+                        li.style.textAlign = 'center';
+                        li.innerHTML = `
+                            <div class="person-name" style="color: #2ecc40; font-style: italic;">
+                                <i class="fas fa-user-check" style="margin-right: 10px;"></i>
+                                Everyone is here!
+                            </div>
+                        `;
+                        absentList.appendChild(li);
+                    }
+                    
+                    // Update counts
+                    document.getElementById('present-count').textContent = data.present.length;
+                    document.getElementById('absent-count').textContent = data.absent.length;
+                    document.getElementById('total-count').textContent = data.present.length + data.absent.length;
+                    
+                    // Update last scan time
+                    const now = new Date();
+                    document.getElementById('last-scan-time').textContent = 
+                        now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    // Reset button
+                    refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                    refreshBtn.style.pointerEvents = 'auto';
+                    
+                    // Restart countdown
+                    startCountdown();
+                })
+                .catch(error => {
+                    console.error('Error refreshing presence:', error);
+                    refreshBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+                    setTimeout(() => {
+                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
+                        refreshBtn.style.pointerEvents = 'auto';
+                    }, 2000);
+                });
+        }
+        
+        // Start countdown on page load
+        startCountdown();
+        
+        // Auto-refresh presence when page becomes visible
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                refreshPresence();
             }
+        });
+        
+        // Initialize with fade-in animation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add animation to cards
+            const cards = document.querySelectorAll('.card');
+            cards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.1}s`;
+            });
         });
     </script>
 </body>
@@ -830,7 +1149,6 @@ def wifi_qr():
         return send_file(buf, mimetype="image/png")
     except Exception as e:
         print(f"[ERROR] Failed to generate WiFi QR: {e}")
-        # Return a simple error image
         from PIL import Image, ImageDraw
         img = Image.new('RGB', (150, 150), color='white')
         d = ImageDraw.Draw(img)
@@ -872,7 +1190,6 @@ def get_weather():
             r = requests.get(url, timeout=5)
             if r.status_code == 200:
                 w = r.json()
-                # Weather class for background
                 icon = w['weather'][0]['icon']
                 desc = w['weather'][0]['description'].lower()
                 if 'rain' in desc or 'drizzle' in desc:
@@ -921,6 +1238,26 @@ def get_system_status():
     except Exception as e:
         print(f"[ERROR] Failed to get system status: {e}")
         return {"cpu": 0, "mem": 0, "disk": 0}
+
+@app.route("/api/presence")
+def api_presence():
+    """API endpoint for presence data"""
+    try:
+        present, absent = get_present_absent_colleagues()
+        return jsonify({
+            "present": present,
+            "absent": absent,
+            "timestamp": datetime.now().isoformat(),
+            "total": len(present) + len(absent)
+        })
+    except Exception as e:
+        print(f"[ERROR] API presence error: {e}")
+        return jsonify({
+            "present": [],
+            "absent": [],
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e)
+        }), 500
 
 @app.route("/")
 def public_info():
@@ -978,7 +1315,6 @@ def public_info():
     except Exception as e:
         print(f"[CRITICAL] Unhandled exception in public_info: {e}")
         print(traceback.format_exc())
-        # Return a simple error page
         return """
         <html>
         <head><title>Opses Dashboard - Error</title></head>
@@ -1032,6 +1368,7 @@ if __name__ == "__main__":
     print(f"Running on Raspberry Pi: {platform.system()}")
     print(f"Python version: {platform.python_version()}")
     print(f"Server will be available at: http://0.0.0.0:8081")
+    print(f"Network Scanner Available: {NETWORK_SCANNER_AVAILABLE}")
     print("=" * 60)
     
     # Start background update thread
@@ -1044,7 +1381,6 @@ if __name__ == "__main__":
     
     # Run the Flask app
     try:
-        # Disable Flask's default logging to reduce noise
         import logging
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
