@@ -12,7 +12,7 @@ import requests
 import json
 import traceback
 from datetime import datetime, timedelta
-from flask import Flask, render_template_string, send_file, request, jsonify
+from flask import Flask, render_template_string, send_file, request, jsonify, send_from_directory
 
 # Try to import required modules with fallbacks
 try:
