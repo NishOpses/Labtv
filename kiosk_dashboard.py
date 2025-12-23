@@ -901,13 +901,19 @@ def index():
         
         # Get calendar events
         calendar_events = get_calendar_events()
-        
-        # Get weather (empty for now - implement later)
-        weather = {}
-        
+
+        # Get weather (with debug output)
+        try:
+            weather = get_weather() if 'get_weather' in globals() else None
+            if not weather:
+                print('[DEBUG] Weather unavailable or fetch failed')
+        except Exception as e:
+            print(f'[DEBUG] Weather fetch error: {e}')
+            weather = None
+
         # Get date from useful_info
         time_info = get_time_info()
-        
+
         return render_template_string(TEMPLATE,
             date=time_info['date'],
             weather=weather,
@@ -930,7 +936,9 @@ def wifi_qr():
     try:
         # WiFi QR code format
         wifi_string = f"WIFI:S:{WIFI_SSID};T:{WIFI_AUTH};P:{WIFI_PASSWORD};;"
-        
+        if not WIFI_SSID or not WIFI_PASSWORD or not WIFI_AUTH:
+            print(f"[ERROR] Missing WiFi info: SSID={WIFI_SSID}, AUTH={WIFI_AUTH}, PASS={'***' if WIFI_PASSWORD else ''}")
+            return 'WiFi info missing', 500
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -939,16 +947,14 @@ def wifi_qr():
         )
         qr.add_data(wifi_string)
         qr.make(fit=True)
-        
         img = qr.make_image(fill_color="black", back_color="white")
-        
         # Save to bytes
         img_bytes = io.BytesIO()
         img.save(img_bytes, format='PNG')
         img_bytes.seek(0)
-        
         return send_file(img_bytes, mimetype='image/png')
     except Exception as e:
+        print(f"[ERROR] QR code generation failed: {e}")
         return str(e), 500
 
 @app.route('/api/presence')
