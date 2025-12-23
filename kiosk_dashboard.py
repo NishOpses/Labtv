@@ -834,16 +834,16 @@ TEMPLATE = """<!DOCTYPE html>
     
     <!-- System info bar at bottom -->
     <div class="system-info-bar">
-        <div class="system-stats">
-            <div class="stat-item">
+        <div class="system-stats" style="font-size: 1vw; padding: 0.2vw 0.5vw; min-width: 0;">
+            <div class="stat-item" style="display: inline-block; margin-right: 1vw;">
                 <span class="stat-label">CPU:</span>
                 <span class="stat-value cpu-value">{{ sys_status.cpu }}%</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item" style="display: inline-block; margin-right: 1vw;">
                 <span class="stat-label">RAM:</span>
                 <span class="stat-value mem-value">{{ sys_status.mem }}%</span>
             </div>
-            <div class="stat-item">
+            <div class="stat-item" style="display: inline-block;">
                 <span class="stat-label">Disk:</span>
                 <span class="stat-value disk-value">{{ sys_status.disk }}%</span>
             </div>
