@@ -215,17 +215,17 @@ body {
         font-weight: 900;
         margin-left: 2vw;
         text-shadow: 0 2px 12px #0006;
-    gap: 0.5vw;
-    justify-content: center;
-        font-size: 3vw;
-        margin-top: 1vh;
-        color: #eee;
-        text-shadow: 0 1px 4px #0005;
-    /* flip animation removed */
-}
-@keyframes flip {
-    0% { transform: rotateX(0deg); }
-    50% { transform: rotateX(90deg); }
+               font-size: 11vw;
+               color: #fff;
+               font-weight: bold;
+               letter-spacing: 0.08em;
+               text-shadow: 0 4px 24px #000a;
+               margin-bottom: 1vh;
+               display: flex;
+               gap: 0.5vw;
+               justify-content: center;
+               align-items: center;
+               perspective: 200px;
     100% { transform: rotateX(0deg); }
 }
 .public-date {
